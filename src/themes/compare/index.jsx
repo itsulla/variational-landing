@@ -15,6 +15,7 @@ import {
   VARIATIONAL_LAUNCH_DATE,
 } from "../../config.js";
 import TrustStrip from "../../components/TrustStrip.jsx";
+import { CountdownBanner } from "../../components/Footer.jsx";
 
 const WINDOW_OPTIONS = [
   { key: "ytd", label: "Year to date" },
@@ -1122,13 +1123,15 @@ function CTASection() {
    ═══════════════════════════════════════════════════════════════════════ */
 function CompareFooter() {
   return (
-    <footer
-      style={{
-        padding: "24px 0 32px",
-        borderTop: `1px solid ${THEME.borderColor}`,
-      }}
-    >
-      <div style={container}>
+    <>
+      <CountdownBanner theme={THEME} />
+      <footer
+        style={{
+          padding: "24px 0 32px",
+          borderTop: `1px solid ${THEME.borderColor}`,
+        }}
+      >
+        <div style={container}>
         <div
           style={{
             fontFamily: FONTS.mono,
@@ -1150,7 +1153,8 @@ function CompareFooter() {
           </div>
         </div>
       </div>
-    </footer>
+      </footer>
+    </>
   );
 }
 

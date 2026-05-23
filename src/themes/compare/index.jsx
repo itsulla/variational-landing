@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -12,7 +12,14 @@ import {
   REFERRAL_LINK,
   REFERRAL_CODE,
   RATES_API_BASE,
+  VARIATIONAL_LAUNCH_DATE,
 } from "../../config.js";
+
+const WINDOW_OPTIONS = [
+  { key: "ytd", label: "Year to date" },
+  { key: "launch", label: "Since Variational launch" },
+  { key: "all", label: "All-time" },
+];
 
 /* ─── Theme tokens ────────────────────────────────────────────────── */
 const THEME = {
@@ -117,9 +124,9 @@ const container = {
 };
 
 /* ─── Data hook ───────────────────────────────────────────────────── */
-function useCompareData() {
+function useThreeWayData(windowKey) {
   const [protocols, setProtocols] = useState([]);
-  const [summary, setSummary] = useState(null);
+  const [windowMeta, setWindowMeta] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -130,34 +137,25 @@ function useCompareData() {
 
     async function fetchData() {
       const attemptTime = new Date().toISOString();
-      if (!cancelled) setLastAttempt(attemptTime);
+      if (!cancelled) {
+        setLastAttempt(attemptTime);
+        setLoading(true);
+      }
 
       try {
-        const [protocolRes, summaryRes] = await Promise.all([
-          fetch(`${RATES_API_BASE}/api/compare/protocols`),
-          fetch(`${RATES_API_BASE}/api/compare/summary`),
-        ]);
-        if (!protocolRes.ok || !summaryRes.ok) throw new Error("API error");
-
-        const protocolData = await protocolRes.json();
-        const summaryData = await summaryRes.json();
-
+        const res = await fetch(
+          `${RATES_API_BASE}/api/compare/three?window=${windowKey}`
+        );
+        if (!res.ok) throw new Error("API error");
+        const data = await res.json();
         if (!cancelled) {
-          // Normalize: API returns display_name, frontend uses name
-          setProtocols(
-            (protocolData.protocols || []).map((p) => ({
-              ...p,
-              name: p.display_name || p.name || p.slug,
-            }))
-          );
-          setSummary(summaryData);
-          setLastUpdated(protocolData.last_updated || attemptTime);
+          setProtocols(data.protocols || []);
+          setWindowMeta(data.window || null);
+          setLastUpdated(data.last_updated || attemptTime);
           setError(null);
         }
       } catch (err) {
-        if (!cancelled) {
-          setError(err.message);
-        }
+        if (!cancelled) setError(err.message);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -169,9 +167,9 @@ function useCompareData() {
       cancelled = true;
       clearInterval(interval);
     };
-  }, []);
+  }, [windowKey]);
 
-  return { protocols, summary, loading, error, lastUpdated, lastAttempt };
+  return { protocols, windowMeta, loading, error, lastUpdated, lastAttempt };
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -349,13 +347,82 @@ function ErrorState({ lastAttempt }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
+   WINDOW FILTER PILLS
+   ═══════════════════════════════════════════════════════════════════════ */
+function WindowFilter({ value, onChange, windowMeta }) {
+  const wrap = {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 10,
+    padding: "20px 0 4px",
+  };
+  const row = {
+    display: "inline-flex",
+    border: `1px solid ${THEME.borderColor}`,
+    background: THEME.cardBg,
+    borderRadius: 3,
+    overflow: "hidden",
+  };
+  const pill = (active) => ({
+    padding: "9px 18px",
+    fontFamily: FONTS.mono,
+    fontSize: "0.72rem",
+    fontWeight: 600,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
+    cursor: "pointer",
+    background: active ? THEME.accent : "transparent",
+    color: active ? "#000" : THEME.text,
+    border: "none",
+    borderRight: `1px solid ${THEME.borderColor}`,
+    transition: "background 0.15s, color 0.15s",
+    whiteSpace: "nowrap",
+  });
+  return (
+    <section style={{ ...container, ...wrap }}>
+      <div style={row}>
+        {WINDOW_OPTIONS.map((opt, i) => (
+          <button
+            key={opt.key}
+            style={{
+              ...pill(value === opt.key),
+              borderRight:
+                i === WINDOW_OPTIONS.length - 1
+                  ? "none"
+                  : `1px solid ${THEME.borderColor}`,
+            }}
+            onClick={() => onChange(opt.key)}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+      {windowMeta && (
+        <div
+          style={{
+            fontFamily: FONTS.mono,
+            fontSize: "0.68rem",
+            color: THEME.muted,
+            letterSpacing: "0.04em",
+          }}
+        >
+          {windowMeta.label} — {windowMeta.days} day
+          {windowMeta.days === 1 ? "" : "s"} of fee data
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
    SUMMARY STATS ROW
    ═══════════════════════════════════════════════════════════════════════ */
-function SummaryStats({ summary, protocols, lastUpdated }) {
-  const totalVolume24h = useMemo(() => {
-    return protocols.reduce((sum, p) => sum + (p.volume_24h || 0), 0);
-  }, [protocols]);
-
+function SummaryStats({ protocols, lastUpdated }) {
+  const totalVolume24h = useMemo(
+    () => protocols.reduce((sum, p) => sum + (p.volume_24h || 0), 0),
+    [protocols]
+  );
   const variational = protocols.find(
     (p) => p.name && p.name.toLowerCase() === "variational"
   );
@@ -363,27 +430,16 @@ function SummaryStats({ summary, protocols, lastUpdated }) {
     variational && totalVolume24h > 0
       ? ((variational.volume_24h || 0) / totalVolume24h) * 100
       : 0;
+  const totalOI = protocols.reduce((s, p) => s + (p.open_interest || 0), 0);
 
   const stats = [
+    { label: "COMBINED 24H VOLUME", value: formatNumber(totalVolume24h) },
     {
-      label: "TOTAL DEX PERP VOLUME (24H)",
-      value: formatNumber(summary?.total_volume_24h || totalVolume24h),
+      label: "VARIATIONAL SHARE (24H)",
+      value: `${marketShare.toFixed(2)}%`,
     },
-    {
-      label: "VARIATIONAL MARKET SHARE",
-      value:
-        summary?.variational_market_share != null
-          ? `${summary.variational_market_share.toFixed(2)}%`
-          : `${marketShare.toFixed(2)}%`,
-    },
-    {
-      label: "PROTOCOLS TRACKED",
-      value: String(summary?.protocol_count || protocols.length),
-    },
-    {
-      label: "DATA FRESHNESS",
-      value: timeSince(lastUpdated),
-    },
+    { label: "COMBINED OPEN INTEREST", value: formatNumber(totalOI) },
+    { label: "DATA FRESHNESS", value: timeSince(lastUpdated) },
   ];
 
   return (
@@ -457,212 +513,136 @@ function SummaryStats({ summary, protocols, lastUpdated }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   COMPARISON TABLE
+   THREE-WAY COMPARISON TABLE — metrics as rows, protocols as columns
    ═══════════════════════════════════════════════════════════════════════ */
-function ComparisonTable({ protocols }) {
-  const [sortKey, setSortKey] = useState("volume_24h");
-  const [sortDir, setSortDir] = useState("desc");
+function ThreeWayTable({ protocols, windowMeta }) {
+  const order = ["variational", "hyperliquid", "lighter"];
+  const byName = {};
+  for (const p of protocols) byName[p.name.toLowerCase()] = p;
+  const cols = order.map((k) => byName[k]).filter(Boolean);
 
-  const handleSort = useCallback(
-    (key) => {
-      if (sortKey === key) {
-        setSortDir((d) => (d === "desc" ? "asc" : "desc"));
-      } else {
-        setSortKey(key);
-        setSortDir("desc");
-      }
+  const winLabel = windowMeta?.label || "Selected window";
+
+  function fmtFee(p) {
+    if (p.fees_note) return p.fees_note;
+    return formatNumber(p.fees_window);
+  }
+  function fmtAvg(p) {
+    if (p.fees_note) return "—";
+    return formatNumber(p.daily_avg_fees_window);
+  }
+  function fmtMarkets(p) {
+    return p.markets_count != null ? String(p.markets_count) : "—";
+  }
+  function fmtNum(v) {
+    return v != null ? formatNumber(v) : "—";
+  }
+
+  const rows = [
+    {
+      label: "Architecture",
+      sublabel: null,
+      cell: (p) => p.architecture || "—",
+      mono: false,
     },
-    [sortKey]
-  );
-
-  const sorted = useMemo(() => {
-    return [...protocols].sort((a, b) => {
-      let av = a[sortKey];
-      let bv = b[sortKey];
-      // Handle strings for non-numeric sorts
-      if (typeof av === "string") av = av.toLowerCase();
-      if (typeof bv === "string") bv = bv.toLowerCase();
-      // nulls/undefined last
-      if (av == null) return 1;
-      if (bv == null) return -1;
-      if (sortDir === "desc") return av > bv ? -1 : av < bv ? 1 : 0;
-      return av > bv ? 1 : av < bv ? -1 : 0;
-    });
-  }, [protocols, sortKey, sortDir]);
-
-  const columns = [
-    { key: "name", label: "Protocol", width: 170, sticky: true },
-    { key: "architecture", label: "Architecture", width: 130 },
-    { key: "volume_24h", label: "24h Volume", width: 120 },
-    { key: "volume_7d", label: "7d Volume", width: 120 },
-    { key: "open_interest", label: "Open Interest", width: 120 },
-    { key: "tvl", label: "TVL", width: 100 },
-    { key: "fee_model", label: "Fee Model", width: 140 },
-    { key: "token_status", label: "Token", width: 100 },
-    { key: "fdv", label: "FDV", width: 110 },
-    { key: "community_allocation", label: "Community %", width: 110 },
+    {
+      label: "Fee model",
+      sublabel: null,
+      cell: (p) => p.fee_model || "—",
+      mono: false,
+    },
+    {
+      label: "Markets",
+      sublabel: "tradable instruments",
+      cell: (p) => fmtMarkets(p),
+      mono: true,
+    },
+    {
+      label: "24h Volume",
+      sublabel: "live snapshot",
+      cell: (p) => fmtNum(p.volume_24h),
+      mono: true,
+    },
+    {
+      label: "Cumulative Volume",
+      sublabel: "all-time (where reported)",
+      cell: (p) => fmtNum(p.cumulative_volume),
+      mono: true,
+    },
+    {
+      label: `Fees — ${winLabel}`,
+      sublabel: "from DefiLlama",
+      cell: (p) => fmtFee(p),
+      mono: true,
+    },
+    {
+      label: "Daily Avg Fees",
+      sublabel: "across selected window",
+      cell: (p) => fmtAvg(p),
+      mono: true,
+    },
+    {
+      label: "Open Interest",
+      sublabel: "live snapshot",
+      cell: (p) => fmtNum(p.open_interest),
+      mono: true,
+    },
+    {
+      label: "TVL",
+      sublabel: "DefiLlama snapshot",
+      cell: (p) => fmtNum(p.tvl),
+      mono: true,
+    },
   ];
 
-  const arrow = (key) => {
-    if (sortKey !== key) return "";
-    return sortDir === "desc" ? " \u25BC" : " \u25B2";
-  };
+  const isVar = (p) =>
+    p && p.name && p.name.toLowerCase() === "variational";
 
-  function tokenBadge(status) {
-    if (!status) return <span style={{ color: THEME.muted }}>N/A</span>;
-    const lower = status.toLowerCase();
-    let bg = THEME.muted;
-    let label = status;
-    if (lower === "live" || lower === "launched") {
-      bg = THEME.positive;
-      label = "Live";
-    } else if (lower.includes("pre") || lower.includes("tge")) {
-      bg = THEME.accent;
-      label = "Pre-TGE";
-    } else if (lower === "n/a" || lower === "none") {
-      bg = THEME.muted;
-      label = "N/A";
-    }
-    return (
-      <span
-        style={{
-          display: "inline-block",
-          padding: "2px 8px",
-          borderRadius: 3,
-          fontSize: "0.68rem",
-          fontWeight: 600,
-          fontFamily: FONTS.mono,
-          background: `${bg}22`,
-          color: bg,
-          border: `1px solid ${bg}44`,
-          letterSpacing: "0.04em",
-        }}
-      >
-        {label}
-      </span>
-    );
-  }
-
-  function renderCell(protocol, col) {
-    const val = protocol[col.key];
-    switch (col.key) {
-      case "name":
-        return (
-          <div>
-            <div
-              style={{
-                fontWeight: 600,
-                color: THEME.text,
-                fontSize: "0.82rem",
-              }}
-            >
-              {protocol.name}
-            </div>
-            {protocol.chain && (
-              <div
-                style={{
-                  fontSize: "0.65rem",
-                  color: THEME.muted,
-                  marginTop: 2,
-                }}
-              >
-                {protocol.chain}
-              </div>
-            )}
-          </div>
-        );
-      case "volume_24h":
-      case "volume_7d":
-      case "open_interest":
-      case "tvl":
-        return (
-          <span style={{ fontFamily: FONTS.mono, fontSize: "0.82rem" }}>
-            {formatNumber(val)}
-          </span>
-        );
-      case "fdv":
-        if (!val && protocol.token_status?.toLowerCase().includes("pre")) {
-          return (
-            <span
-              style={{
-                fontFamily: FONTS.mono,
-                fontSize: "0.78rem",
-                color: THEME.accent,
-              }}
-            >
-              Pre-TGE
-            </span>
-          );
-        }
-        return (
-          <span style={{ fontFamily: FONTS.mono, fontSize: "0.82rem" }}>
-            {typeof val === "number" ? formatNumber(val) : val || "\u2014"}
-          </span>
-        );
-      case "community_allocation":
-        return (
-          <span style={{ fontFamily: FONTS.mono, fontSize: "0.82rem" }}>
-            {val != null
-              ? String(val).includes("%") || isNaN(parseFloat(val)) ? val : `${val}%`
-              : "\u2014"}
-          </span>
-        );
-      case "token_status":
-        return tokenBadge(val);
-      case "architecture":
-      case "fee_model":
-        return (
-          <span style={{ fontSize: "0.78rem", color: `${THEME.text}cc` }}>
-            {val || "\u2014"}
-          </span>
-        );
-      default:
-        return <span>{val != null ? String(val) : "\u2014"}</span>;
-    }
-  }
-
-  const isVariational = (p) =>
-    p.name && p.name.toLowerCase() === "variational";
-
-  const thStyle = (col) => ({
-    position: col.sticky ? "sticky" : "relative",
-    left: col.sticky ? 0 : undefined,
-    zIndex: col.sticky ? 2 : 1,
-    minWidth: col.width,
-    padding: "10px 14px",
+  const headerCell = (p) => ({
+    padding: "16px 18px",
     textAlign: "left",
     fontFamily: FONTS.mono,
-    fontSize: "0.65rem",
-    fontWeight: 600,
-    letterSpacing: "0.08em",
-    textTransform: "uppercase",
-    color: THEME.muted,
-    background: THEME.cardBg,
-    borderBottom: `1px solid ${THEME.borderColor}`,
-    cursor: "pointer",
-    userSelect: "none",
+    fontSize: "0.95rem",
+    fontWeight: 700,
+    letterSpacing: "0.04em",
+    color: isVar(p) ? THEME.accent : THEME.text,
+    background: isVar(p) ? `${THEME.accent}10` : THEME.cardBg,
+    borderBottom: `2px solid ${isVar(p) ? THEME.accent : THEME.borderColor}`,
     whiteSpace: "nowrap",
-    transition: "color 0.15s",
+    width: "26%",
   });
 
-  const tdStyle = (col, isVar) => ({
-    position: col.sticky ? "sticky" : "relative",
-    left: col.sticky ? 0 : undefined,
-    zIndex: col.sticky ? 1 : 0,
-    minWidth: col.width,
-    padding: "12px 14px",
-    fontFamily: FONTS.body,
-    fontSize: "0.82rem",
-    color: THEME.text,
-    background: isVar ? `${THEME.accent}08` : THEME.bg,
+  const labelCell = {
+    padding: "14px 18px",
+    fontFamily: FONTS.mono,
+    fontSize: "0.72rem",
+    fontWeight: 600,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
+    color: THEME.muted,
+    background: THEME.bg,
     borderBottom: `1px solid ${THEME.borderColor}`,
+    verticalAlign: "top",
+    width: "22%",
+    minWidth: 200,
+  };
+
+  const dataCell = (p, mono) => ({
+    padding: "14px 18px",
+    fontFamily: mono ? FONTS.mono : FONTS.body,
+    fontSize: "0.88rem",
+    fontWeight: isVar(p) ? 600 : 500,
+    color: isVar(p) ? THEME.text : `${THEME.text}d0`,
+    background: isVar(p) ? `${THEME.accent}08` : "transparent",
+    borderBottom: `1px solid ${THEME.borderColor}`,
+    borderLeft: isVar(p) ? `3px solid ${THEME.accent}` : "1px solid transparent",
     whiteSpace: "nowrap",
   });
 
   return (
-    <section style={{ padding: "24px 0" }}>
+    <section style={{ padding: "20px 0 24px" }}>
       <div style={container}>
-        <div style={{ marginBottom: 12 }}>
+        <div style={{ marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8 }}>
           <span
             style={{
               fontFamily: FONTS.mono,
@@ -673,7 +653,17 @@ function ComparisonTable({ protocols }) {
               color: THEME.muted,
             }}
           >
-            PROTOCOL COMPARISON
+            PROTOCOL COMPARISON — 3 PROTOCOLS
+          </span>
+          <span
+            style={{
+              fontFamily: FONTS.mono,
+              fontSize: "0.65rem",
+              color: `${THEME.muted}cc`,
+              letterSpacing: "0.04em",
+            }}
+          >
+            Live: native APIs &middot; Fees/TVL: DefiLlama
           </span>
         </div>
         <div
@@ -687,64 +677,71 @@ function ComparisonTable({ protocols }) {
             style={{
               width: "100%",
               borderCollapse: "collapse",
-              minWidth: 1100,
+              minWidth: 760,
+              tableLayout: "fixed",
             }}
           >
             <thead>
               <tr>
-                {columns.map((col) => (
-                  <th
-                    key={col.key}
-                    style={{
-                      ...thStyle(col),
-                      color: sortKey === col.key ? THEME.accent : THEME.muted,
-                    }}
-                    onClick={() => handleSort(col.key)}
-                  >
-                    {col.label}
-                    {arrow(col.key)}
+                <th style={{ ...labelCell, background: THEME.cardBg, color: THEME.muted, borderBottom: `2px solid ${THEME.borderColor}`, fontSize: "0.68rem" }}>
+                  Metric
+                </th>
+                {cols.map((p) => (
+                  <th key={p.slug} style={headerCell(p)}>
+                    {p.name}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {sorted.map((p, i) => {
-                const isVar = isVariational(p);
-                return (
-                  <tr
-                    key={p.name || i}
-                    style={{
-                      borderLeft: isVar
-                        ? `3px solid ${THEME.accent}`
-                        : "3px solid transparent",
-                      transition: "background 0.15s",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isVar) {
-                        e.currentTarget.style.background = `${THEME.cardBg}`;
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isVar) {
-                        e.currentTarget.style.background = "transparent";
-                      }
-                    }}
-                  >
-                    {columns.map((col) => (
-                      <td key={col.key} style={tdStyle(col, isVar)}>
-                        {renderCell(p, col)}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
+              {rows.map((row) => (
+                <tr key={row.label}>
+                  <td style={labelCell}>
+                    <div>{row.label}</div>
+                    {row.sublabel && (
+                      <div
+                        style={{
+                          marginTop: 4,
+                          textTransform: "none",
+                          fontSize: "0.65rem",
+                          color: `${THEME.muted}aa`,
+                          letterSpacing: "0.02em",
+                          fontWeight: 400,
+                        }}
+                      >
+                        {row.sublabel}
+                      </div>
+                    )}
+                  </td>
+                  {cols.map((p) => (
+                    <td key={p.slug} style={dataCell(p, row.mono)}>
+                      {row.cell(p)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
             </tbody>
           </table>
+        </div>
+        <div
+          style={{
+            marginTop: 10,
+            fontFamily: FONTS.mono,
+            fontSize: "0.62rem",
+            color: `${THEME.muted}cc`,
+            lineHeight: 1.6,
+          }}
+        >
+          Variational charges 0% trading fees, so its fee totals stay at $0
+          regardless of window. Cumulative volume is reported only by protocols
+          that expose it directly — Hyperliquid &amp; Lighter historical volume
+          is paywalled on DefiLlama.
         </div>
       </div>
     </section>
   );
 }
+
 
 /* ═══════════════════════════════════════════════════════════════════════
    VOLUME CHART
@@ -1123,8 +1120,9 @@ function CompareFooter() {
    ═══════════════════════════════════════════════════════════════════════ */
 export default function CompareTheme() {
   const [ready, setReady] = useState(false);
-  const { protocols, summary, loading, error, lastUpdated, lastAttempt } =
-    useCompareData();
+  const [windowKey, setWindowKey] = useState("ytd");
+  const { protocols, windowMeta, loading, error, lastUpdated, lastAttempt } =
+    useThreeWayData(windowKey);
 
   useEffect(() => {
     injectGlobalStyles();
@@ -1132,7 +1130,7 @@ export default function CompareTheme() {
     return () => clearTimeout(t);
   }, []);
 
-  if (!ready || loading) {
+  if (!ready || (loading && protocols.length === 0)) {
     return (
       <div style={pageWrap}>
         <HeaderBar lastUpdated={null} />
@@ -1153,12 +1151,13 @@ export default function CompareTheme() {
   return (
     <div style={pageWrap}>
       <HeaderBar lastUpdated={lastUpdated} />
-      <SummaryStats
-        summary={summary}
-        protocols={protocols}
-        lastUpdated={lastUpdated}
+      <WindowFilter
+        value={windowKey}
+        onChange={setWindowKey}
+        windowMeta={windowMeta}
       />
-      <ComparisonTable protocols={protocols} />
+      <SummaryStats protocols={protocols} lastUpdated={lastUpdated} />
+      <ThreeWayTable protocols={protocols} windowMeta={windowMeta} />
       <VolumeChart protocols={protocols} />
       <WhyVariational />
       <CTASection />

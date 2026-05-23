@@ -4,6 +4,8 @@ export let REFERRAL_LINK = "https://omni.variational.io/?ref=OMNIXOIXIBOD";
 export const RATES_API_BASE =
   import.meta.env.VITE_RATES_API_BASE || "";
 
+export const VARIATIONAL_LAUNCH_DATE = "2025-01-01";
+
 export function swapReferralCode(newCode) {
   REFERRAL_CODE = newCode;
   REFERRAL_LINK = `https://omni.variational.io/?ref=${newCode}`;

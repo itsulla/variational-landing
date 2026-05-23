@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0e1a"/>
+      <stop offset="100%" stop-color="#0f1424"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="100" y="130" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="#60a5fa" letter-spacing="3">INSIGHTS · CATEGORY ANALYSIS</text>
+  <text x="100" y="220" font-family="system-ui, sans-serif" font-size="54" font-weight="700" fill="#e8ecf4">The Perp DEX Market</text>
+  <text x="100" y="280" font-family="system-ui, sans-serif" font-size="54" font-weight="700" fill="#e8ecf4">Isn't <tspan fill="#60a5fa">Winner-Take-All</tspan></text>
+  <text x="100" y="365" font-family="system-ui, sans-serif" font-size="22" fill="#cbd5e1">Why Hyperliquid, Lighter, and Variational each own</text>
+  <text x="100" y="395" font-family="system-ui, sans-serif" font-size="22" fill="#cbd5e1">a distinct slice of decentralized perpetuals — and</text>
+  <text x="100" y="425" font-family="system-ui, sans-serif" font-size="22" fill="#cbd5e1">why their growth is additive, not zero-sum.</text>
+  <g transform="translate(100, 500)">
+    <rect width="180" height="36" rx="18" fill="#60a5fa" fill-opacity="0.15" stroke="#60a5fa" stroke-opacity="0.4"/>
+    <text x="20" y="24" font-family="ui-monospace, monospace" font-size="14" fill="#60a5fa" font-weight="600">HYPERLIQUID</text>
+    <rect x="200" width="130" height="36" rx="18" fill="#60a5fa" fill-opacity="0.15" stroke="#60a5fa" stroke-opacity="0.4"/>
+    <text x="220" y="24" font-family="ui-monospace, monospace" font-size="14" fill="#60a5fa" font-weight="600">LIGHTER</text>
+    <rect x="350" width="180" height="36" rx="18" fill="#60a5fa" fill-opacity="0.15" stroke="#60a5fa" stroke-opacity="0.4"/>
+    <text x="370" y="24" font-family="ui-monospace, monospace" font-size="14" fill="#60a5fa" font-weight="600">VARIATIONAL</text>
+  </g>
+  <text x="1100" y="595" text-anchor="end" font-family="system-ui, sans-serif" font-size="16" fill="#64748b">tryvariational.xyz/insights</text>
+</svg>

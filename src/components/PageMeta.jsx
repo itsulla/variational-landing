@@ -169,6 +169,81 @@ const PAGE_META = {
       },
     },
   },
+  "/insights": {
+    title: "Insights | Perp DEX Research & Analysis | tryvariational",
+    description:
+      "Independent research and analysis on decentralized perpetuals — Hyperliquid, Lighter, Variational, and the broader perp DEX category.",
+    og: {
+      title: "Insights | Perp DEX Research & Analysis",
+      description:
+        "Architecture deep-dives, side-by-side comparisons, and category notes from tryvariational.",
+      image: `${SITE_URL}/og-insights.svg`,
+    },
+    twitter: {
+      title: "Insights | Perp DEX Research & Analysis",
+      description:
+        "Architecture deep-dives, side-by-side comparisons, and category notes from tryvariational.",
+    },
+    jsonLd: {
+      "@type": "Blog",
+      name: "tryvariational Insights",
+      description:
+        "Independent research and analysis on the decentralized perpetuals category.",
+      url: `${SITE_URL}/insights`,
+    },
+  },
+  "/insights/why-perp-dexes-coexist": {
+    title:
+      "The Perp DEX Market Isn't Winner-Take-All | Hyperliquid vs Lighter vs Variational",
+    description:
+      "Different architectures attract different traders. Why Hyperliquid, Lighter, and Variational each own a distinct slice of decentralized perpetuals — and why their growth is additive, not zero-sum.",
+    og: {
+      title:
+        "The Perp DEX Market Isn't Winner-Take-All — Why Hyperliquid, Lighter, and Variational All Win",
+      description:
+        "Three architectures, three audiences. A neutral take on why the perp DEX category isn't zero-sum.",
+      image: `${SITE_URL}/og-insights-coexist.svg`,
+    },
+    twitter: {
+      title:
+        "The Perp DEX Market Isn't Winner-Take-All — Why Three Top Venues Can All Coexist",
+      description:
+        "Architecture is destiny. Hyperliquid, Lighter, Variational — different products for different traders.",
+    },
+    jsonLd: {
+      "@type": "Article",
+      headline:
+        "The Perp DEX Market Isn't Winner-Take-All: Why Hyperliquid, Lighter, and Variational All Win",
+      description:
+        "Different architectures attract different traders. Why three of the largest decentralized perpetual exchanges occupy distinct niches and grow in parallel.",
+      url: `${SITE_URL}/insights/why-perp-dexes-coexist`,
+      image: `${SITE_URL}/og-insights-coexist.svg`,
+      datePublished: "2026-05-23",
+      dateModified: "2026-05-23",
+      author: {
+        "@type": "Organization",
+        name: "tryvariational",
+        url: SITE_URL,
+      },
+      publisher: {
+        "@type": "Organization",
+        name: "tryvariational",
+        url: SITE_URL,
+        logo: {
+          "@type": "ImageObject",
+          url: `${SITE_URL}/og-image.svg`,
+        },
+      },
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": `${SITE_URL}/insights/why-perp-dexes-coexist`,
+      },
+      keywords:
+        "perp DEX, Hyperliquid, Lighter, Variational, perpetual futures, RFQ, CLOB, decentralized derivatives",
+      articleSection: "Category Analysis",
+      inLanguage: "en",
+    },
+  },
 };
 
 /* Organisation schema — injected on every page */

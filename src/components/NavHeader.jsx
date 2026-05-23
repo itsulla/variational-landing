@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { path: "/rates", label: "Funding Rates" },
   { path: "/compare", label: "DEX Compare" },
   { path: "/liquidations", label: "Liquidations" },
+  { path: "/insights", label: "Insights" },
 ];
 
 /**

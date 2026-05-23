@@ -1,0 +1,233 @@
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import Footer from "../../components/Footer.jsx";
+import TrustStrip from "../../components/TrustStrip.jsx";
+
+/* Match the article theme exactly so the navigation feels seamless. */
+const THEME = {
+  bg: "#0a0e1a",
+  bgAlt: "#0f1424",
+  text: "#e8ecf4",
+  textDim: "#cbd5e1",
+  accent: "#60a5fa",
+  muted: "#94a3b8",
+  hairline: "#1e293b",
+};
+
+const FONTS = {
+  heading: "'Outfit', system-ui, sans-serif",
+  body: "'DM Sans', system-ui, sans-serif",
+  mono: "'JetBrains Mono', ui-monospace, monospace",
+};
+
+/* Source of truth for the article index. New articles append here. */
+const ARTICLES = [
+  {
+    slug: "why-perp-dexes-coexist",
+    title: "The Perp DEX Market Isn't Winner-Take-All",
+    subtitle:
+      "Different architectures attract different traders. Why Hyperliquid, Lighter, and Variational each own a distinct slice of decentralized perpetuals — and why their growth is additive, not zero-sum.",
+    date: "May 23, 2026",
+    dateISO: "2026-05-23",
+    readTime: "5 min read",
+    tag: "Category Analysis",
+  },
+];
+
+function injectFonts() {
+  const id = "insights-fonts";
+  if (document.getElementById(id)) return;
+  const link = document.createElement("link");
+  link.id = id;
+  link.rel = "stylesheet";
+  link.href =
+    "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap";
+  document.head.appendChild(link);
+}
+
+export default function InsightsIndex() {
+  useEffect(() => {
+    injectFonts();
+    window.scrollTo(0, 0);
+  }, []);
+
+  return (
+    <div
+      style={{
+        background: THEME.bg,
+        color: THEME.text,
+        minHeight: "100vh",
+        fontFamily: FONTS.body,
+      }}
+    >
+      <section
+        style={{
+          maxWidth: 920,
+          margin: "0 auto",
+          padding: "64px 24px 32px",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: FONTS.mono,
+            fontSize: "0.72rem",
+            fontWeight: 600,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: THEME.accent,
+            marginBottom: 14,
+          }}
+        >
+          Insights
+        </div>
+        <h1
+          style={{
+            fontFamily: FONTS.heading,
+            fontSize: "clamp(2rem, 4.5vw, 3rem)",
+            fontWeight: 700,
+            letterSpacing: "-0.015em",
+            lineHeight: 1.15,
+            margin: "0 0 16px",
+          }}
+        >
+          Research &amp; analysis on the perp DEX category
+        </h1>
+        <p
+          style={{
+            fontSize: "1.1rem",
+            lineHeight: 1.6,
+            color: THEME.textDim,
+            maxWidth: 640,
+            margin: 0,
+          }}
+        >
+          Independent writing on decentralized perpetuals — architecture
+          deep-dives, comparisons across Hyperliquid, Lighter, Variational, and
+          the rest of the category, and notes on what actually matters when
+          you're picking a venue.
+        </p>
+      </section>
+
+      <section
+        style={{
+          maxWidth: 920,
+          margin: "0 auto",
+          padding: "16px 24px 80px",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gap: 20,
+          }}
+        >
+          {ARTICLES.map((a) => (
+            <Link
+              key={a.slug}
+              to={`/insights/${a.slug}`}
+              style={{
+                display: "block",
+                padding: "26px 26px 24px",
+                background: THEME.bgAlt,
+                border: `1px solid ${THEME.hairline}`,
+                borderRadius: 10,
+                textDecoration: "none",
+                color: THEME.text,
+                transition: "border-color 0.2s, transform 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = THEME.accent;
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = THEME.hairline;
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  fontFamily: FONTS.mono,
+                  fontSize: "0.72rem",
+                  color: THEME.muted,
+                  marginBottom: 12,
+                }}
+              >
+                <span
+                  style={{
+                    padding: "2px 9px",
+                    background: `${THEME.accent}15`,
+                    border: `1px solid ${THEME.accent}33`,
+                    borderRadius: 999,
+                    color: THEME.accent,
+                    fontWeight: 500,
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  {a.tag}
+                </span>
+                <time dateTime={a.dateISO}>{a.date}</time>
+                <span>·</span>
+                <span>{a.readTime}</span>
+              </div>
+              <h2
+                style={{
+                  fontFamily: FONTS.heading,
+                  fontSize: "clamp(1.3rem, 2.5vw, 1.6rem)",
+                  fontWeight: 700,
+                  letterSpacing: "-0.01em",
+                  lineHeight: 1.25,
+                  margin: "0 0 10px",
+                }}
+              >
+                {a.title}
+              </h2>
+              <p
+                style={{
+                  fontSize: "0.98rem",
+                  lineHeight: 1.6,
+                  color: THEME.textDim,
+                  margin: 0,
+                }}
+              >
+                {a.subtitle}
+              </p>
+              <div
+                style={{
+                  marginTop: 16,
+                  fontFamily: FONTS.mono,
+                  fontSize: "0.75rem",
+                  color: THEME.accent,
+                  letterSpacing: "0.04em",
+                }}
+              >
+                Read article →
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        <div
+          style={{
+            marginTop: 48,
+            padding: "20px 22px",
+            border: `1px dashed ${THEME.hairline}`,
+            borderRadius: 8,
+            fontSize: "0.88rem",
+            lineHeight: 1.6,
+            color: THEME.muted,
+            background: `${THEME.accent}05`,
+          }}
+        >
+          More analysis is in the works. Topics on deck: funding-rate
+          arbitrage mechanics, the OLP vs HLP design tradeoff, and a closer
+          look at RWA perpetuals across venues.
+        </div>
+      </section>
+
+      <TrustStrip theme={THEME} fonts={FONTS} />
+      <Footer theme={THEME} />
+    </div>
+  );
+}

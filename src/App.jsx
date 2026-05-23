@@ -12,6 +12,10 @@ const Neon = lazy(() => import("./themes/neon/index.jsx"));
 const Rates = lazy(() => import("./themes/rates/index.jsx"));
 const Compare = lazy(() => import("./themes/compare/index.jsx"));
 const Liquidations = lazy(() => import("./themes/liquidations/index.jsx"));
+const InsightsIndex = lazy(() => import("./themes/insights/index.jsx"));
+const WhyPerpDexesCoexist = lazy(() =>
+  import("./themes/insights/why-perp-dexes-coexist.jsx")
+);
 
 /* Nav header color presets per route */
 const NAV_COLORS = {
@@ -22,7 +26,13 @@ const NAV_COLORS = {
   "/rates": { accent: "#fbbf24", bg: "#0c0b09", text: "#e8e0d0" },
   "/compare": { accent: "#FFB800", bg: "#0A0A0A", text: "#e8e0d0" },
   "/liquidations": { accent: "#00FF41", bg: "#000000", text: "#00FF41" },
+  "/insights": { accent: "#60a5fa", bg: "#0a0e1a", text: "#e8ecf4" },
 };
+
+/* /insights uses the same nav-color palette as the home theme — the
+ * NAV_COLORS lookup above is exact-match by pathname, so deeper article
+ * routes (/insights/...) fall through to the home defaults. That's
+ * fine: same blue accent, same dark bg. */
 
 function Loading() {
   return (
@@ -68,6 +78,11 @@ export default function App() {
           <Route path="/rates" element={<Rates />} />
           <Route path="/compare" element={<Compare />} />
           <Route path="/liquidations" element={<Liquidations />} />
+          <Route path="/insights" element={<InsightsIndex />} />
+          <Route
+            path="/insights/why-perp-dexes-coexist"
+            element={<WhyPerpDexesCoexist />}
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0e1a"/>
+      <stop offset="100%" stop-color="#0f1424"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="100" y="170" font-family="system-ui, sans-serif" font-size="20" font-weight="600" fill="#60a5fa" letter-spacing="3">INSIGHTS · TRYVARIATIONAL</text>
+  <text x="100" y="270" font-family="system-ui, sans-serif" font-size="56" font-weight="700" fill="#e8ecf4">Research &amp; analysis on the</text>
+  <text x="100" y="335" font-family="system-ui, sans-serif" font-size="56" font-weight="700" fill="#60a5fa">perp DEX category</text>
+  <text x="100" y="420" font-family="system-ui, sans-serif" font-size="24" fill="#cbd5e1">Architecture deep-dives. Side-by-side comparisons.</text>
+  <text x="100" y="455" font-family="system-ui, sans-serif" font-size="24" fill="#cbd5e1">Category notes on Hyperliquid, Lighter, Variational.</text>
+  <text x="100" y="555" font-family="system-ui, sans-serif" font-size="18" fill="#64748b">tryvariational.xyz/insights</text>
+</svg>

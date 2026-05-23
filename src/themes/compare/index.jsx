@@ -657,7 +657,13 @@ function ThreeWayTable({ protocols, windowMeta }) {
     background: isVar(p) ? `${THEME.accent}08` : "transparent",
     borderBottom: `1px solid ${THEME.borderColor}`,
     borderLeft: isVar(p) ? `3px solid ${THEME.accent}` : "1px solid transparent",
-    whiteSpace: "nowrap",
+    // Numeric/mono rows stay single-line for visual rhythm; descriptive
+    // rows (Architecture, Fee model, RWA/TradFi) wrap so long strings
+    // don't collide across columns.
+    whiteSpace: mono ? "nowrap" : "normal",
+    verticalAlign: "top",
+    lineHeight: mono ? 1.2 : 1.45,
+    wordBreak: "break-word",
   });
 
   return (

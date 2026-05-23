@@ -321,8 +321,8 @@ export default function OriginalTheme() {
           {[
             { prefix: "$", value: cumVolFmt.value, suffix: cumVolFmt.suffix, label: "Cumulative Volume" },
             { prefix: "$", value: vol24hFmt.value, suffix: vol24hFmt.suffix, label: "24h Volume" },
-            { prefix: "~", value: 500, suffix: "", label: "Markets" },
-            { prefix: "$", value: 4, suffix: "M+", label: "Losses Refunded" },
+            { prefix: "", value: 450, suffix: "+", label: "Markets" },
+            { prefix: "$", value: 50, suffix: "M", label: "Series A (May 2026)" },
           ].map((s) => (
             <div key={s.label} style={{ textAlign: "center" }}>
               <AnimatedCounter

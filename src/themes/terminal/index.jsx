@@ -616,30 +616,30 @@ export default function TerminalTheme() {
         >
           <StatCard
             prefix="$"
-            value={175}
+            value={224}
             suffix="B+"
             label="Cumulative Volume"
             inView={statsInView}
           />
           <StatCard
             prefix="$"
-            value={700}
+            value={875}
             suffix="M+"
             label="Open Interest"
             inView={statsInView}
           />
           <StatCard
-            prefix="~"
-            value={500}
-            suffix=""
+            prefix=""
+            value={450}
+            suffix="+"
             label="Markets"
             inView={statsInView}
           />
           <StatCard
             prefix="$"
-            value={4}
-            suffix="M+"
-            label="Refunded to Traders"
+            value={50}
+            suffix="M"
+            label="Series A (May 2026)"
             inView={statsInView}
           />
         </div>

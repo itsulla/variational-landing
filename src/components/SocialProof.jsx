@@ -11,7 +11,7 @@ export default function SocialProof({ theme, fonts }) {
         </svg>
       ),
       title: "$50M Series A",
-      desc: "Led by Dragonfly, with Bain Capital Crypto & Coinbase Ventures",
+      desc: "Led by Dragonfly Capital — Bain Capital Crypto & Coinbase Ventures participated (May 2026)",
     },
     {
       icon: (

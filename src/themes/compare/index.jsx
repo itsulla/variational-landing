@@ -14,6 +14,7 @@ import {
   RATES_API_BASE,
   VARIATIONAL_LAUNCH_DATE,
 } from "../../config.js";
+import TrustStrip from "../../components/TrustStrip.jsx";
 
 const WINDOW_OPTIONS = [
   { key: "ytd", label: "Year to date" },
@@ -538,6 +539,16 @@ function ThreeWayTable({ protocols, windowMeta }) {
     return v != null ? formatNumber(v) : "—";
   }
 
+  // RWA / TradFi coverage by protocol — sourced from docs.variational.io and each protocol's own listings.
+  // Variational uniquely offers commodity perps (XAU/XAG/COPPER/CL) plus pre-IPO equities (e.g. SPCX).
+  // Hyperliquid and Lighter are crypto-only as of May 2026.
+  const RWA_COVERAGE = {
+    variational:
+      "Gold (XAU), silver (XAG), copper, oil (CL), SpaceX pre-IPO (SPCX); 100+ TradFi markets coming summer 2026",
+    hyperliquid: "Crypto-only",
+    lighter: "Crypto-only",
+  };
+
   const rows = [
     {
       label: "Architecture",
@@ -556,6 +567,12 @@ function ThreeWayTable({ protocols, windowMeta }) {
       sublabel: "tradable instruments",
       cell: (p) => fmtMarkets(p),
       mono: true,
+    },
+    {
+      label: "RWA / TradFi",
+      sublabel: "real-world asset coverage",
+      cell: (p) => RWA_COVERAGE[p.slug] || "—",
+      mono: false,
     },
     {
       label: "24h Volume",
@@ -1166,6 +1183,7 @@ export default function CompareTheme() {
       <WhyVariational />
       <CTASection />
       <ToolCrossLinks />
+      <TrustStrip theme={{ ...THEME, muted: THEME.muted, text: THEME.text, accent: THEME.accent }} fonts={FONTS} compact />
       <CompareFooter />
     </div>
   );

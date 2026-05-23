@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ComparisonTable from "../../components/ComparisonTable.jsx";
 import AirdropCalculator from "../../components/AirdropCalculator.jsx";
 import Footer from "../../components/Footer.jsx";
+import TrustStrip from "../../components/TrustStrip.jsx";
 import CopyCode from "../../components/CopyCode.jsx";
 import ToolButtons from "../../components/ToolButtons.jsx";
 import {
@@ -787,6 +788,7 @@ export default function BloombergTheme() {
       <ExecutionProtocol />
       <ReferenceBar />
       <FooterCTA />
+      <TrustStrip theme={THEME} fonts={FONTS} />
       <Footer theme={THEME} />
     </div>
   );

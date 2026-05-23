@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import ComparisonTable from "../../components/ComparisonTable.jsx";
 import AirdropCalculator from "../../components/AirdropCalculator.jsx";
 import Footer from "../../components/Footer.jsx";
+import TrustStrip from "../../components/TrustStrip.jsx";
 import CopyCode from "../../components/CopyCode.jsx";
 import ToolButtons from "../../components/ToolButtons.jsx";
 import SocialProof from "../../components/SocialProof.jsx";
@@ -751,10 +752,15 @@ export default function OriginalTheme() {
           Start Trading on Variational
         </a>
 
-        <div style={{ marginTop: 48 }}>
-          <Footer theme={THEME} />
-        </div>
       </section>
+
+      <div style={{ marginTop: 48 }}>
+        <TrustStrip theme={THEME} fonts={FONTS} />
+      </div>
+
+      <div style={{ marginTop: 24 }}>
+        <Footer theme={THEME} />
+      </div>
     </div>
   );
 }

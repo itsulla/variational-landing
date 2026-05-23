@@ -5,11 +5,12 @@ const ROWS = [
   { label: "Execution Privacy", key: "executionPrivacy", varWins: true },
   { label: "Block Trade Slippage", key: "blockTradeSlippage", varWins: true },
   { label: "Tradable Markets", key: "tradableMarkets", varWins: true },
-  { label: "Loss Refund Program", key: "lossRefund", varWins: true },
+  { label: "Execution Edge", key: "executionEdge", varWins: true },
   { label: "Architecture", key: "architecture", varWins: false },
   { label: "Community Token Allocation", key: "communityAllocation", varWins: true },
   { label: "Funding Raised", key: "raised", varWins: false },
   { label: "Current FDV", key: "fdv", varWins: false },
+  { label: "Status", key: "status", varWins: false },
 ];
 
 export default function ComparisonTable({ theme, fonts, compact }) {

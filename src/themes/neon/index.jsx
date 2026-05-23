@@ -115,31 +115,31 @@ const STATS = [
   { value: MARKET_DATA.variational.cumulativeVolume, label: "Cumulative Volume", color: THEME.accent },
   { value: MARKET_DATA.variational.openInterest, label: "Open Interest", color: THEME.secondary },
   { value: MARKET_DATA.variational.markets, label: "Markets", color: THEME.tertiary },
-  { value: MARKET_DATA.variational.refunded, label: "Losses Refunded", color: THEME.positive },
+  { value: MARKET_DATA.variational.raised, label: "Total Raised", color: THEME.positive },
 ];
 
 const FEATURES = [
   {
     title: "Private Execution",
-    desc: "Every trade routes through a stealth RFQ engine. No one sees your orders, your size, or your direction.",
+    desc: "Every trade routes through a private RFQ engine. No public order book — no one sees your orders, size, or direction.",
     gradient: `linear-gradient(135deg, ${THEME.accent}, ${THEME.tertiary})`,
     borderColor: THEME.accent,
   },
   {
-    title: "Zero Slippage",
-    desc: "Block trades execute at deterministic prices. No sweeping the book. No sandwich attacks.",
+    title: "Tight Spreads",
+    desc: "OLP aggregates liquidity from CEXs, DEXs, and TradFi dealers to quote tight, deterministic prices on every market.",
     gradient: `linear-gradient(135deg, ${THEME.secondary}, ${THEME.accent})`,
     borderColor: THEME.secondary,
   },
   {
     title: "Zero Trading Fees",
-    desc: "0.00% fees permanently. Not a promotion. Built into the protocol architecture.",
+    desc: "0.00% maker and taker fees, permanently. OLP earns by capturing the spread, not by charging users.",
     gradient: `linear-gradient(135deg, ${THEME.tertiary}, ${THEME.secondary})`,
     borderColor: THEME.tertiary,
   },
   {
-    title: "Loss Refund Protocol",
-    desc: "A unique program that refunds trading losses. Over $4M already returned to traders.",
+    title: "450+ Markets",
+    desc: "Crypto perps plus a growing set of RWA markets — gold, silver, copper, oil. More TradFi instruments coming this summer.",
     gradient: `linear-gradient(135deg, ${THEME.positive}, ${THEME.accent})`,
     borderColor: THEME.positive,
   },
@@ -159,7 +159,7 @@ const STEPS = [
   {
     step: 3,
     title: "Trade & Accumulate Points",
-    desc: "Trade any of 500+ markets. Earn points toward the $VAR airdrop.",
+    desc: "Trade any of 450+ markets. Earn points toward the $VAR airdrop.",
   },
 ];
 
@@ -338,8 +338,9 @@ export default function NeonTheme() {
             fontWeight: 400,
           }}
         >
-          Variational is a peer-to-peer derivatives protocol on Arbitrum. Trades execute through
-          a private RFQ engine with deterministic pricing, zero fees, and zero slippage. No order
+          Variational is a peer-to-peer derivatives protocol on Arbitrum, currently in private
+          beta. Trades execute through a private RFQ engine at zero trading fees, with tight
+          spreads sourced from aggregated CEX, DEX, and TradFi liquidity. No public order
           book. No front-running. Your strategy stays yours.
         </p>
 
@@ -581,7 +582,7 @@ export default function NeonTheme() {
             maxWidth: 600,
           }}
         >
-          Hypothetical values based on 100 points, ~10% community allocation, and 9.5M total points at TGE.
+          Hypothetical values based on 100 points and 9.5M total points at TGE. Community allocation shown is 10% (conservative floor — Variational docs target up to ~50%; use the calculator on the landing page to model higher allocations).
         </p>
 
         <div

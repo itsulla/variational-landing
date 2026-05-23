@@ -194,7 +194,7 @@ function TopBar() {
    ═════════════════════════════════════════════════════════════════════ */
 function TickerBar() {
   const content =
-    "BTC/USDT 0% FEE \u2022 ETH/USDT 0% FEE \u2022 SOL/USDT 0% FEE \u2022 $175B+ VOLUME \u2022 500+ MARKETS \u2022 $4M+ REFUNDED \u2022 ";
+    "BTC/USDC 0% FEE \u2022 ETH/USDC 0% FEE \u2022 SOL/USDC 0% FEE \u2022 $224B+ VOLUME \u2022 450+ MARKETS \u2022 $50M SERIES A \u2022 PRIVATE BETA \u2022 ";
 
   const track = {
     overflow: "hidden",
@@ -236,7 +236,7 @@ function Hero() {
     { label: "CUMULATIVE VOL", value: v.cumulativeVolume },
     { label: "OPEN INTEREST", value: v.openInterest },
     { label: "MARKETS", value: v.markets },
-    { label: "REFUNDED", value: v.refunded },
+    { label: "STATUS", value: v.status },
   ];
 
   const section = {
@@ -276,8 +276,9 @@ function Hero() {
           }}
         >
           Variational operates a private RFQ engine on Arbitrum L2, executing perpetual
-          swaps at deterministic pricing with zero fees and zero slippage. Institutional-grade
-          infrastructure, open to all participants. Loss refund protocol active since genesis.
+          swaps at zero trading fees with tight spreads sourced from aggregated CEX, DEX,
+          and TradFi liquidity. Institutional-grade infrastructure, currently in private
+          beta and open to whitelisted participants.
         </p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
           <a
@@ -372,7 +373,9 @@ function ValuationScenarios() {
   ];
 
   const totalPointsEst = POINTS_DATA.estimatedTotalAtTGE;
-  const communityFraction = 0.1; // ~10% community allocation
+  // Conservative 10% floor — Variational docs target up to ~50% community allocation.
+  // The interactive Airdrop Calculator lets users vary this.
+  const communityFraction = 0.1;
 
   return (
     <section style={{ padding: "56px 0", borderBottom: `1px solid ${THEME.muted}22` }}>
@@ -389,9 +392,10 @@ function ValuationScenarios() {
             marginBottom: 28,
           }}
         >
-          Estimated value per point based on ~10% community token allocation and
-          ~{(totalPointsEst / 1_000_000).toFixed(1)}M estimated total points at TGE.
-          These are speculative scenarios, not guarantees.
+          Estimated value per point at a conservative 10% community token allocation
+          (Variational docs target ~50% — use the calculator on the landing page to model
+          higher allocations) and ~{(totalPointsEst / 1_000_000).toFixed(1)}M estimated
+          total points at TGE. Speculative scenarios, not guarantees.
         </p>
 
         <div
@@ -614,7 +618,7 @@ function ReferenceBar() {
   const items = [
     { label: "HYPE FDV", value: "~$29B" },
     { label: "LIT FDV", value: "~$1B" },
-    { label: "VAR RAISED", value: "$11.8M" },
+    { label: "VAR RAISED", value: "$50M Series A" },
   ];
 
   return (

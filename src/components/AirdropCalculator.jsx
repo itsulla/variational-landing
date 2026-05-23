@@ -158,12 +158,17 @@ export default function AirdropCalculator({ theme, fonts }) {
       </div>
 
       {/* Community Allocation */}
-      <div style={labelStyle}>Community Allocation: {communityPct}%</div>
+      <div style={labelStyle}>
+        Community Allocation: {communityPct}%
+        <span style={{ marginLeft: 8, fontSize: "0.7rem", color: `${t.muted}cc`, fontWeight: 400 }}>
+          (docs: ~50% target)
+        </span>
+      </div>
       <div style={sliderWrap}>
         <input
           type="range"
           min={5}
-          max={30}
+          max={50}
           step={1}
           value={communityPct}
           onChange={(e) => setCommunityPct(Number(e.target.value))}
@@ -171,7 +176,7 @@ export default function AirdropCalculator({ theme, fonts }) {
         />
         <div style={sliderLabel}>
           <span>5%</span>
-          <span>30%</span>
+          <span>50%</span>
         </div>
       </div>
 
@@ -278,8 +283,7 @@ export default function AirdropCalculator({ theme, fonts }) {
       </div>
 
       <div style={disclaimer}>
-        Estimates only. Community allocation set to {communityPct}% (adjustable above). Default points rate (~5 pts/$1M) calibrated from observed trader data. Actual
-        rates depend on weekly platform activity and reward tier. Not financial advice.
+        Estimates only. Community allocation set to {communityPct}% (slider above; Variational docs target ~50%). Default points rate (~5 pts/$1M) calibrated from observed trader data. Actual rates depend on weekly platform activity and reward tier. Not financial advice.
       </div>
     </div>
   );

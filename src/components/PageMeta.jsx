@@ -9,26 +9,26 @@ const SITE_URL = "https://tryvariational.xyz";
  */
 const PAGE_META = {
   "/": {
-    title: "Trade 500+ Perpetuals with Zero Fees | Variational on Arbitrum",
+    title: "Trade 450+ Perpetuals with Zero Fees | Variational on Arbitrum",
     description:
-      "Trade perpetual futures on Variational with zero fees, zero slippage, and private execution. Earn points toward the $VAR airdrop. Built on Arbitrum.",
+      "Trade perpetual futures on Variational with zero trading fees, tight aggregated spreads, and private RFQ execution. Earn points toward the $VAR airdrop. Built on Arbitrum (currently in private beta).",
     og: {
-      title: "Trade 500+ Perpetuals with Zero Fees | Variational",
+      title: "Trade 450+ Perpetuals with Zero Fees | Variational",
       description:
-        "Zero fees. Zero slippage. Private execution. 500+ perpetual markets on Arbitrum with a loss refund protocol.",
+        "Zero fees. Tight aggregated spreads. Private execution. 450+ perpetual markets on Arbitrum.",
       image: `${SITE_URL}/og-image.svg`,
     },
     twitter: {
-      title: "Trade 500+ Perpetuals with Zero Fees | Variational",
+      title: "Trade 450+ Perpetuals with Zero Fees | Variational",
       description:
-        "500+ perp markets. Zero fees. Zero slippage. Total privacy. Loss refunds. Built on Arbitrum.",
+        "450+ perp markets. Zero fees. Tight aggregated spreads. Total privacy. Built on Arbitrum.",
     },
     jsonLd: null, // homepage uses Organization schema injected separately
   },
   "/terminal": {
     title: "Trade in the Dark | Variational Terminal",
     description:
-      "Zero fees. Zero slippage. Total stealth. Trade 500+ perpetual markets on Variational's private RFQ engine.",
+      "Zero trading fees. Tight aggregated spreads. Total execution privacy. Trade 450+ perpetual markets on Variational's private RFQ engine.",
     og: {
       title: "Trade in the Dark | Variational Terminal",
       description:
@@ -62,17 +62,17 @@ const PAGE_META = {
   "/neon": {
     title: "Your Edge Stays Invisible | Variational",
     description:
-      "Private execution, zero slippage, zero fees. Trade 500+ perpetual markets where your strategy stays yours.",
+      "Private execution, tight aggregated spreads, zero trading fees. Trade 450+ perpetual markets where your strategy stays yours.",
     og: {
       title: "Your Edge Stays Invisible | Variational",
       description:
-        "Private execution, zero slippage, zero fees. Your strategy stays yours.",
+        "Private execution, tight spreads, zero fees. Your strategy stays yours.",
       image: `${SITE_URL}/og-image.svg`,
     },
     twitter: {
       title: "Your Edge Stays Invisible | Variational",
       description:
-        "Private execution, zero slippage, zero fees. Your strategy stays yours.",
+        "Private execution, tight spreads, zero fees. Your strategy stays yours.",
     },
     jsonLd: null,
   },
@@ -178,7 +178,7 @@ const ORG_SCHEMA = {
   name: "Variational",
   url: SITE_URL,
   description:
-    "Peer-to-peer derivatives protocol on Arbitrum with zero fees, zero slippage, and private RFQ execution.",
+    "Peer-to-peer derivatives protocol on Arbitrum with zero trading fees, tight aggregated spreads, and private RFQ execution.",
   sameAs: [
     "https://x.com/variaboreal",
     "https://discord.gg/variational",

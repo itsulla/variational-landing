@@ -10,8 +10,8 @@ export default function SocialProof({ theme, fonts }) {
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
         </svg>
       ),
-      title: "$11.8M raised",
-      desc: "Backed by leading crypto VCs",
+      title: "$50M Series A",
+      desc: "Led by Dragonfly, with Bain Capital Crypto & Coinbase Ventures",
     },
     {
       icon: (
@@ -45,8 +45,8 @@ export default function SocialProof({ theme, fonts }) {
           <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
         </svg>
       ),
-      title: "$4M+ refunded",
-      desc: "Only protocol that refunds losses",
+      title: "450+ markets",
+      desc: "Crypto perps + RWAs (gold, silver, copper, oil) — TradFi coming",
     },
   ];
 

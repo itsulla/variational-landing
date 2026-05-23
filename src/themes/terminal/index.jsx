@@ -179,12 +179,12 @@ function ScanlineOverlay() {
 }
 
 /* ── Typewriter component ─────────────────────────────────── */
-const TYPE_COMMAND = "> ./trade --zero-fees --zero-slippage --stealth-mode";
+const TYPE_COMMAND = "> ./trade --zero-fees --tight-spreads --private-rfq";
 const RESPONSES = [
   "[OK] Connected to Variational RFQ Engine",
   "[OK] Privacy mode: ACTIVE",
   '[OK] Fee schedule: 0.00% (permanent)',
-  "[OK] Markets available: 500+",
+  "[OK] Markets available: 450+",
   "[OK] Ready to execute.",
 ];
 
@@ -559,9 +559,9 @@ export default function TerminalTheme() {
               marginBottom: 32,
             }}
           >
-            Zero fees. Zero slippage. Total execution privacy. Variational's RFQ
-            engine lets you trade 500+ perpetual markets without revealing your
-            hand.
+            Zero trading fees. Tight aggregated spreads. Total execution
+            privacy. Variational's RFQ engine lets you trade 450+ perpetual
+            markets without revealing your hand. Currently in private beta.
           </p>
 
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
@@ -670,14 +670,14 @@ export default function TerminalTheme() {
             detail="While others charge 0.025%+, Variational's LP model eliminates taker fees entirely."
           />
           <FeatureCard
-            title="ZERO SLIPPAGE"
-            description="Deterministic pricing from Omni LP. Your quoted price is your execution price. No book to sweep."
-            detail="Block trades, whale orders -- same price. No market impact."
+            title="TIGHT SPREADS"
+            description="Omni LP aggregates CEX, DEX, and TradFi liquidity into deterministic quotes. Tight pricing without sweeping an order book."
+            detail="Block trades and whale orders execute at the quoted spread -- no book impact."
           />
           <FeatureCard
-            title="LOSS REFUND PROGRAM"
-            description="Lost money trading? Variational refunds your net losses in points. $4M+ already returned."
-            detail="The only protocol that actively compensates losing traders. Points convert at TGE."
+            title="450+ MARKETS"
+            description="Crypto perps plus growing RWA coverage (gold, silver, copper, oil). More TradFi instruments lined up for this summer."
+            detail="Listing engine adds new markets without bootstrapping new order books."
           />
         </div>
       </section>
@@ -798,7 +798,7 @@ export default function TerminalTheme() {
           <StepCommand
             number="3"
             command="trade --accumulate-points"
-            description="Execute trades across 500+ perpetual markets. Every dollar of volume earns points toward the airdrop. Zero fees, zero slippage."
+            description="Execute trades across 450+ perpetual markets. Every dollar of volume earns points toward the airdrop. Zero fees, tight aggregated spreads."
           />
 
           <div
@@ -811,9 +811,9 @@ export default function TerminalTheme() {
               color: THEME.accent,
             }}
           >
-            <span style={{ color: THEME.secondary }}>[INFO]</span> ~10% of
-            tokens allocated to community. {weeksRemaining} weeks remaining
-            before TGE.
+            <span style={{ color: THEME.secondary }}>[INFO]</span> Up to ~50%
+            of tokens targeted for community allocation per docs. {weeksRemaining}
+            {" "}weeks remaining before TGE.
           </div>
         </div>
 
@@ -889,7 +889,7 @@ export default function TerminalTheme() {
               marginBottom: 24,
             }}
           >
-            ~10% community allocation | $11.8M raised | Pre-TGE
+            Up to ~50% community allocation | $50M Series A | Pre-TGE
           </p>
           <CTAButton href={REFERRAL_LINK} large>
             [ INITIALIZE TRADING ] {"\u2192"}

@@ -393,7 +393,7 @@ async function fetchDefiLlamaProtocols() {
     {
       slug: "variational",
       display_name: "Variational",
-      cumulative_volume: parseFloat(varData.raw.cumulative_volume) || 175000000000,
+      cumulative_volume: parseFloat(varData.raw.cumulative_volume) || null,
       volume_24h: parseFloat(varData.raw.total_volume_24h) || 0,
       markets_count: varData.numMarkets,
       fees: "0.00%",

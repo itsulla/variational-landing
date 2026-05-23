@@ -872,24 +872,28 @@ function WhyVariational() {
   const points = [
     {
       label: "Zero Trading Fees",
-      detail: "Unique among DEXs \u2014 no maker or taker fees, permanently",
+      detail: "0% maker and taker fees, permanently \u2014 OLP earns by capturing the spread, not by charging users",
     },
     {
       label: "Private Execution",
       detail:
-        "RFQ engine with no visible positions, orders, or liquidation levels",
+        "RFQ engine with no public order book \u2014 positions, orders, and liquidation levels stay private",
     },
     {
-      label: "Loss Refund Protocol",
-      detail: "$4M+ returned to traders since genesis",
+      label: "Tight Aggregated Spreads",
+      detail: "OLP aggregates liquidity from CEXs, DEXs, and TradFi dealers into deterministic quotes",
     },
     {
-      label: "~10% Community Allocation",
-      detail: "VAR token with significant community distribution",
+      label: "Up to ~50% Community Allocation",
+      detail: "Per Variational docs (token/usdvar) \u2014 use the calculator on the landing page to model scenarios",
     },
     {
-      label: "~500 Tradable Markets",
-      detail: "Most markets of any perp DEX \u2014 crypto, RWAs, indices",
+      label: "450+ Markets, RWAs Live",
+      detail: "Crypto perps plus gold, silver, copper, oil \u2014 more TradFi instruments coming this summer",
+    },
+    {
+      label: "$50M Series A (May 2026)",
+      detail: "Led by Dragonfly, backed by Bain Capital Crypto and Coinbase Ventures",
     },
   ];
 

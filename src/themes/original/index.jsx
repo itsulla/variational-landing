@@ -99,16 +99,17 @@ const cardBase = {
 
 /* ---------- Tier data ---------- */
 
+/* Reward tiers — sourced from docs.variational.io/omni/rewards
+   Volume mult marked "*" is "coming soon" per the official docs.
+   Referral on Omni is flat: 1 point earned for every 10 your referrals earn. */
 const TIERS = [
-  { tier: "Iron", volume: "$0", boost: "1x", refund: "Standard", referral: "10%" },
-  { tier: "Bronze", volume: "$100K", boost: "1.2x", refund: "Elevated", referral: "12%" },
-  { tier: "Silver", volume: "$500K", boost: "1.5x", refund: "Higher", referral: "15%" },
-  { tier: "Gold", volume: "$2.5M", boost: "2x", refund: "High", referral: "18%" },
-  { tier: "Platinum", volume: "$10M", boost: "2.5x", refund: "Very High", referral: "20%" },
-  { tier: "Diamond", volume: "$50M", boost: "3x", refund: "Maximum", referral: "22%" },
-  { tier: "Master", volume: "$250M", boost: "4x", refund: "Maximum", referral: "25%" },
-  { tier: "Grandmaster", volume: "$1B", boost: "5x", refund: "Maximum", referral: "27%" },
-  { tier: "Infinity", volume: "$2.5B", boost: "8x", refund: "Maximum", referral: "30%" },
+  { tier: "Iron",     volume: "$0",      boost: "+0%",   volMult: "1x" },
+  { tier: "Bronze",   volume: "$1M",     boost: "+0.5%", volMult: "1x" },
+  { tier: "Silver",   volume: "$5M",     boost: "+1%",   volMult: "1x" },
+  { tier: "Gold",     volume: "$25M",    boost: "+2%",   volMult: "1.1x*" },
+  { tier: "Platinum", volume: "$100M",   boost: "+3%",   volMult: "1.2x*" },
+  { tier: "Diamond",  volume: "$750M",   boost: "+4%",   volMult: "1.2x*" },
+  { tier: "Infinity", volume: "$2.5B",   boost: "+5%",   volMult: "1.3x*" },
 ];
 
 /* ---------- Feature card data ---------- */
@@ -116,19 +117,19 @@ const TIERS = [
 const FEATURES = [
   {
     title: "Private Execution",
-    desc: "Every trade is executed through a private RFQ engine. No one sees your orders. No front-running, ever.",
+    desc: "Every trade is executed through a private RFQ engine. No public order book — no one sees your orders, size, or direction.",
   },
   {
-    title: "Zero Slippage",
-    desc: "Block trades at deterministic prices. No sweeping the order book. Your quoted price is your fill price.",
+    title: "Tight Spreads",
+    desc: "OLP aggregates liquidity from CEXs, DEXs, and TradFi dealers to quote tight, deterministic prices instead of sweeping an order book.",
   },
   {
     title: "Zero Trading Fees",
-    desc: "0.00% trading fees, permanently. Not a promo — it's baked into the protocol architecture.",
+    desc: "0.00% maker and taker fees, permanently. The protocol earns by capturing the spread, not by charging users.",
   },
   {
-    title: "Loss Refund Protocol",
-    desc: "The only protocol that actively refunds trading losses. $4M+ already returned to traders.",
+    title: "450+ Markets",
+    desc: "Crypto perps plus a growing list of RWA markets (gold, silver, copper, oil). More TradFi instruments lined up for listing this summer.",
   },
 ];
 
@@ -148,7 +149,7 @@ const STEPS = [
   {
     step: 3,
     title: "Trade & Accumulate Points",
-    desc: "Trade any of 500+ markets. Every dollar of volume earns points toward the $VAR airdrop.",
+    desc: "Trade any of 450+ markets. Every dollar of volume earns points toward the $VAR airdrop.",
   },
 ];
 
@@ -166,29 +167,33 @@ function formatVolume(n) {
 export default function OriginalTheme() {
   const weeksLeft = getWeeksRemaining();
 
-  /* Live stats from DefiLlama via our API */
+  /* Live Variational stats via our /api/compare/three endpoint */
   const [liveStats, setLiveStats] = useState(null);
   useEffect(() => {
     async function fetchStats() {
       try {
-        const [protoRes, sumRes] = await Promise.all([
-          fetch(`${RATES_API_BASE}/api/compare/protocols`),
-          fetch(`${RATES_API_BASE}/api/compare/summary`),
-        ]);
-        const protoData = await protoRes.json();
-        const sumData = await sumRes.json();
-        const variational = (protoData.protocols || []).find(
+        const res = await fetch(`${RATES_API_BASE}/api/compare/three?window=ytd`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const variational = (data.protocols || []).find(
           (p) => p.slug === "variational"
+        );
+        const total24h = (data.protocols || []).reduce(
+          (s, p) => s + (p.volume_24h || 0),
+          0
         );
         if (variational) {
           setLiveStats({
             cumVol: variational.cumulative_volume,
             vol24h: variational.volume_24h,
             markets: variational.markets_count,
-            marketShare: sumData.variational_market_share_pct,
+            marketShare:
+              total24h > 0
+                ? (variational.volume_24h / total24h) * 100
+                : null,
           });
         }
-      } catch (e) {
+      } catch (_e) {
         /* fallback to static */
       }
     }
@@ -219,7 +224,25 @@ export default function OriginalTheme() {
     >
       {/* ===== HERO ===== */}
       <section style={{ ...section, paddingTop: 60, paddingBottom: 60 }}>
-        <div style={sectionLabel}>// Peer-to-peer derivatives protocol</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+          <div style={sectionLabel}>// Peer-to-peer derivatives protocol</div>
+          <span
+            style={{
+              fontFamily: LABEL_FONT,
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: THEME.accent,
+              padding: "3px 8px",
+              borderRadius: 3,
+              border: `1px solid ${THEME.accent}55`,
+              background: `${THEME.accent}10`,
+            }}
+          >
+            Mainnet — Private Beta
+          </span>
+        </div>
 
         <h1
           style={{
@@ -229,8 +252,8 @@ export default function OriginalTheme() {
             marginBottom: 24,
           }}
         >
-          Trade 500+ perpetual markets.{" "}
-          <span style={{ color: THEME.accent }}>Zero fees.</span> Zero slippage.
+          Trade 450+ perpetual markets.{" "}
+          <span style={{ color: THEME.accent }}>Zero fees.</span> Tight spreads.
           Total privacy.
         </h1>
 
@@ -244,8 +267,9 @@ export default function OriginalTheme() {
           }}
         >
           Variational is a peer-to-peer derivatives protocol on Arbitrum. Trades
-          execute through a private RFQ engine with deterministic pricing, zero
-          fees, and zero slippage. No order book. No front-running.
+          execute through a private RFQ engine that aggregates CEX, DEX, and
+          TradFi liquidity into tight, deterministic quotes — at 0% trading
+          fees. No public order book. No front-running.
         </p>
 
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
@@ -531,7 +555,7 @@ export default function OriginalTheme() {
           >
             <thead>
               <tr>
-                {["Tier", "30d Volume", "Points Boost", "Loss Refund Odds", "Referral Rate"].map(
+                {["Tier", "30d Volume", "Points Boost", "Volume Multiplier"].map(
                   (h) => (
                     <th
                       key={h}
@@ -601,20 +625,11 @@ export default function OriginalTheme() {
                       style={{
                         padding: "12px 18px",
                         borderBottom: `1px solid ${THEME.muted}18`,
-                        color: `${THEME.text}bb`,
-                      }}
-                    >
-                      {row.refund}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px 18px",
-                        borderBottom: `1px solid ${THEME.muted}18`,
                         fontFamily: FONTS.mono,
                         color: `${THEME.text}cc`,
                       }}
                     >
-                      {row.referral}
+                      {row.volMult}
                     </td>
                   </tr>
                 );
@@ -622,6 +637,27 @@ export default function OriginalTheme() {
             </tbody>
           </table>
         </div>
+        <p
+          style={{
+            marginTop: 12,
+            fontSize: "0.78rem",
+            color: `${THEME.text}88`,
+            lineHeight: 1.6,
+          }}
+        >
+          Source:{" "}
+          <a
+            href="https://docs.variational.io/omni/rewards"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: THEME.accent, textDecoration: "underline" }}
+          >
+            docs.variational.io/omni/rewards
+          </a>
+          . Items marked * are "coming soon" per the official docs. Omni
+          referrals are flat: 1 point earned per 10 your referrals earn (no
+          tier-based referral boost).
+        </p>
       </section>
 
       {/* ===== URGENCY + FOOTER CTA ===== */}
@@ -662,7 +698,7 @@ export default function OriginalTheme() {
             marginBottom: 16,
           }}
         >
-          Zero fees. Zero risk. What are you waiting for?
+          Zero fees. Tight spreads. What are you waiting for?
         </h2>
 
         <p
@@ -674,10 +710,10 @@ export default function OriginalTheme() {
             lineHeight: 1.6,
           }}
         >
-          Variational charges no trading fees — ever. And if you lose money,
-          the protocol's loss refund program has already returned{" "}
-          <span style={{ color: THEME.accent, fontWeight: 600 }}>$4M+ to traders</span>.
-          Start trading now and accumulate points toward the $VAR airdrop.
+          Variational charges no trading fees — ever. OLP captures the bid-ask
+          spread instead of charging users, then routes a cut to the protocol
+          treasury. Start trading now and accumulate points toward the{" "}
+          <span style={{ color: THEME.accent, fontWeight: 600 }}>$VAR airdrop</span>.
         </p>
 
         <div

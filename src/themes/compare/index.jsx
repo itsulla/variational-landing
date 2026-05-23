@@ -539,14 +539,18 @@ function ThreeWayTable({ protocols, windowMeta }) {
     return v != null ? formatNumber(v) : "—";
   }
 
-  // RWA / TradFi coverage by protocol — sourced from docs.variational.io and each protocol's own listings.
-  // Variational uniquely offers commodity perps (XAU/XAG/COPPER/CL) plus pre-IPO equities (e.g. SPCX).
-  // Hyperliquid and Lighter are crypto-only as of May 2026.
+  // RWA / TradFi coverage by protocol — all three perp DEXes have meaningful RWA
+  // exposure as of May 2026. Numbers verified against each protocol's live API.
+  // Don't oversell Variational here: HL's 'xyz' sub-protocol leads on both count
+  // and volume right now ($1.8B+ 24h). Variational's pitch is the Phase 2 roadmap
+  // (100+ TradFi markets summer 2026) and the OLP architecture, not current breadth.
   const RWA_COVERAGE = {
     variational:
-      "Gold (XAU), silver (XAG), copper, oil (CL), SpaceX pre-IPO (SPCX); 100+ TradFi markets coming summer 2026",
-    hyperliquid: "Crypto-only",
-    lighter: "Crypto-only",
+      "~10 live (XAU, XAG, COPPER, CL, PAXG, SPCX); 100+ TradFi markets planned for summer 2026",
+    hyperliquid:
+      "79 on 'xyz' sub-protocol — $1.8B+ 24h vol (incl. AAPL, NVDA, SP500, BRENTOIL, SPCX, RKLB)",
+    lighter:
+      "49 live (~3% of platform volume — TSLA, NVDA, COIN, XAU, EURUSD, etc.)",
   };
 
   const rows = [
@@ -905,8 +909,8 @@ function WhyVariational() {
       detail: "Per Variational docs (token/usdvar) \u2014 use the calculator on the landing page to model scenarios",
     },
     {
-      label: "450+ Markets, RWAs Live",
-      detail: "Crypto perps plus gold, silver, copper, oil \u2014 more TradFi instruments coming this summer",
+      label: "450+ Markets \u00b7 TradFi Roadmap",
+      detail: "Crypto-focused today (~10 RWAs live incl. gold, silver, oil, SpaceX pre-IPO). 100+ TradFi markets planned for summer 2026 via vertically integrated OLP",
     },
     {
       label: "$50M Series A (May 2026)",

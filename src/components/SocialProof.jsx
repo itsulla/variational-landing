@@ -45,8 +45,8 @@ export default function SocialProof({ theme, fonts }) {
           <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
         </svg>
       ),
-      title: "450+ markets",
-      desc: "Crypto perps + RWAs (gold, silver, copper, oil) — TradFi coming",
+      title: "Portfolio margin",
+      desc: "Deribit-compatible cross-margining across 450+ perpetual markets",
     },
   ];
 

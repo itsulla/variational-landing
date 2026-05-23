@@ -129,8 +129,8 @@ const FEATURES = [
     desc: "0.00% maker and taker fees, permanently. The protocol earns by capturing the spread, not by charging users.",
   },
   {
-    title: "450+ Markets",
-    desc: "Crypto perps plus a growing list of RWA markets (gold, silver, copper, oil). More TradFi instruments lined up for listing this summer.",
+    title: "Deribit-Compatible Portfolio Margin",
+    desc: "Cross-margin every position from a single account. Variational's margin engine matches Deribit's portfolio-margin math, with a decorrelation-risk parameter that benefits diversified books.",
   },
 ];
 

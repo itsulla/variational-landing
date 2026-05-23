@@ -890,31 +890,39 @@ function VolumeChart({ protocols }) {
    WHY VARIATIONAL CALLOUT
    ═══════════════════════════════════════════════════════════════════════ */
 function WhyVariational() {
+  // Ranked by genuine differentiation strength. RWA breadth deliberately
+  // omitted \u2014 Hyperliquid currently leads on both market count (79) and
+  // 24h volume ($1.8B+) via its 'xyz' sub-protocol, so it's not a moat.
   const points = [
     {
       label: "Zero Trading Fees",
-      detail: "0% maker and taker fees, permanently \u2014 OLP earns by capturing the spread, not by charging users",
-    },
-    {
-      label: "Private Execution",
       detail:
-        "RFQ engine with no public order book \u2014 positions, orders, and liquidation levels stay private",
+        "0% maker and taker fees, permanently. Hyperliquid charges 0.015% maker / 0.045% taker; OLP earns by capturing the spread instead.",
     },
     {
-      label: "Tight Aggregated Spreads",
-      detail: "OLP aggregates liquidity from CEXs, DEXs, and TradFi dealers into deterministic quotes",
+      label: "Private RFQ Execution",
+      detail:
+        "No public order book \u2014 positions, orders, and liquidation levels stay private. Hyperliquid's L4 order book is fully public.",
+    },
+    {
+      label: "Vertically Integrated Liquidity (OLP)",
+      detail:
+        "Single counterparty aggregates depth from CEXs, DEXs, and TradFi dealers \u2014 tight deterministic quotes without bootstrapping a new order book per market.",
+    },
+    {
+      label: "Deribit-Compatible Portfolio Margin",
+      detail:
+        "Cross-margin every position from one account. Engine matches Deribit's portfolio-margin math with a decorrelation-risk parameter \u2014 sophisticated feature competitors don't market.",
     },
     {
       label: "Up to ~50% Community Allocation",
-      detail: "Per Variational docs (token/usdvar) \u2014 use the calculator on the landing page to model scenarios",
-    },
-    {
-      label: "450+ Markets \u00b7 TradFi Roadmap",
-      detail: "Crypto-focused today (~10 RWAs live incl. gold, silver, oil, SpaceX pre-IPO). 100+ TradFi markets planned for summer 2026 via vertically integrated OLP",
+      detail:
+        "Per the docs (token/usdvar). Higher community share than Hyperliquid (31%) or Lighter (25%).",
     },
     {
       label: "$50M Series A (May 2026)",
-      detail: "Led by Dragonfly, backed by Bain Capital Crypto and Coinbase Ventures",
+      detail:
+        "Led by Dragonfly Capital \u2014 Bain Capital Crypto and Coinbase Ventures participated. Audited by Spearbit and Zellic.",
     },
   ];
 

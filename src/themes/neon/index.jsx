@@ -139,8 +139,8 @@ const FEATURES = [
     borderColor: THEME.tertiary,
   },
   {
-    title: "450+ Markets",
-    desc: "Crypto perps plus a growing set of RWA markets — gold, silver, copper, oil. More TradFi instruments coming this summer.",
+    title: "Deribit-Compatible Portfolio Margin",
+    desc: "Cross-margin everything from one account. The margin engine matches Deribit's portfolio-margin math, with a decorrelation parameter for diversified books.",
     gradient: `linear-gradient(135deg, ${THEME.positive}, ${THEME.accent})`,
     borderColor: THEME.positive,
   },

@@ -676,9 +676,9 @@ export default function TerminalTheme() {
             detail="Block trades and whale orders execute at the quoted spread -- no book impact."
           />
           <FeatureCard
-            title="450+ MARKETS"
-            description="Crypto perps plus growing RWA coverage (gold, silver, copper, oil). More TradFi instruments lined up for this summer."
-            detail="Listing engine adds new markets without bootstrapping new order books."
+            title="PORTFOLIO MARGIN (DERIBIT-COMPAT)"
+            description="Cross-margin every position from one account. Margin engine matches Deribit's portfolio-margin math, with a decorrelation-risk knob for diversified books."
+            detail="Sophisticated trader feature. Settlement pools stay isolated per user — no contagion across accounts."
           />
         </div>
       </section>

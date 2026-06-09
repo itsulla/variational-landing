@@ -260,23 +260,48 @@ function fmtVolume(val) {
 }
 
 function exchangeAbbr(name) {
-  const map = { binance: "BIN", bybit: "BYB", hyperliquid: "HL", okx: "OKX", gateio: "GATE", bitget: "BGT", tradexyz: "XYZ", hyena: "HYNA", lighter: "LGTR", edgex: "EDGX" };
-  return map[(name || "").toLowerCase()] || name.toUpperCase().slice(0, 3);
+  const map = {
+    binance: "BIN", bybit: "BYB", hyperliquid: "HL",
+    okx: "OKX", gateio: "GATE", "gate.io": "GATE", bitget: "BGT",
+    bitmex: "MEX", htx: "HTX", aster: "ASTR", woox: "WOO",
+    dydx: "DYDX", kraken: "KRKN", phemex: "PHMX",
+    tradexyz: "XYZ", hyena: "HYNA", lighter: "LGTR", edgex: "EDGX",
+  };
+  return map[(name || "").toLowerCase()] || (name || "").toUpperCase().slice(0, 4);
 }
 
 function exchangeFullName(name) {
-  const map = { binance: "Binance", bybit: "Bybit", hyperliquid: "Hyperliquid", okx: "OKX", gateio: "Gate.io", bitget: "Bitget" };
-  return map[(name || "").toLowerCase()] || name.charAt(0).toUpperCase() + name.slice(1);
+  const map = {
+    binance: "Binance", bybit: "Bybit", hyperliquid: "Hyperliquid",
+    okx: "OKX", gateio: "Gate.io", "gate.io": "Gate.io", bitget: "Bitget",
+    bitmex: "BitMEX", htx: "HTX", aster: "Aster", woox: "WOO X",
+    dydx: "dYdX", kraken: "Kraken Futures", phemex: "Phemex",
+    edgex: "edgeX",
+  };
+  return map[(name || "").toLowerCase()] || (name || "").charAt(0).toUpperCase() + (name || "").slice(1);
 }
 
-/* ─── CEX Fee Tables (hardcoded) ─────────────────────────────────── */
+/* ─── CEX Fee Tables ──────────────────────────────────────────────
+   Maker/taker fees as basis-point-equivalent percentages (0.02 = 0.02%).
+   fundingInterval is hours per funding cycle — drives the per-period
+   payout math elsewhere in this file. */
 const CEX_FEES = {
-  binance:      { maker: 0.0200, taker: 0.0500, name: "Binance",      fundingInterval: 8 },
-  bybit:        { maker: 0.0200, taker: 0.0550, name: "Bybit",        fundingInterval: 8 },
-  hyperliquid:  { maker: 0.0200, taker: 0.0500, name: "Hyperliquid",  fundingInterval: 8 },
-  okx:          { maker: 0.0200, taker: 0.0500, name: "OKX",          fundingInterval: 8 },
-  gateio:       { maker: 0.0200, taker: 0.0500, name: "Gate.io",      fundingInterval: 8 },
-  bitget:       { maker: 0.0200, taker: 0.0600, name: "Bitget",       fundingInterval: 8 },
+  // Direct integrations (work from US VPS)
+  okx:          { maker: 0.0200, taker: 0.0500, name: "OKX",            fundingInterval: 8 },
+  gateio:       { maker: 0.0200, taker: 0.0500, name: "Gate.io",        fundingInterval: 8 },
+  "gate.io":    { maker: 0.0200, taker: 0.0500, name: "Gate.io",        fundingInterval: 8 },
+  bitget:       { maker: 0.0200, taker: 0.0600, name: "Bitget",         fundingInterval: 8 },
+  hyperliquid:  { maker: 0.0200, taker: 0.0500, name: "Hyperliquid",    fundingInterval: 8 },
+  // Coinalyze-proxied
+  binance:      { maker: 0.0200, taker: 0.0500, name: "Binance",        fundingInterval: 8 },
+  bybit:        { maker: 0.0200, taker: 0.0550, name: "Bybit",          fundingInterval: 8 },
+  bitmex:       { maker: 0.0100, taker: 0.0500, name: "BitMEX",         fundingInterval: 8 },
+  htx:          { maker: 0.0200, taker: 0.0500, name: "HTX",            fundingInterval: 8 },
+  aster:        { maker: 0.0000, taker: 0.0350, name: "Aster",          fundingInterval: 8 },
+  woox:         { maker: 0.0300, taker: 0.0300, name: "WOO X",          fundingInterval: 8 },
+  dydx:         { maker: 0.0000, taker: 0.0500, name: "dYdX",           fundingInterval: 1 },
+  kraken:       { maker: 0.0200, taker: 0.0500, name: "Kraken Futures", fundingInterval: 4 },
+  phemex:       { maker: 0.0100, taker: 0.0600, name: "Phemex",         fundingInterval: 8 },
 };
 
 const VAR_FEES = { maker: 0, taker: 0, name: "Variational", fundingInterval: 1 };

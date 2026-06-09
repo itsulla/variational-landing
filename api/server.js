@@ -91,11 +91,9 @@ async function fetchVariationalRates() {
 // data, so we route the two blocked exchanges through it instead.
 //
 // Exchange codes (verified via /v1/exchanges):
-//   A = Binance, 6 = Bybit, 3 = OKX, Y = Gate.io, H = Hyperliquid, …
-//
-// Symbol shapes (verified via /v1/future-markets for BTC):
-//   Binance USDT perps: BTCUSDT_PERP.A
-//   Bybit  USDT perps: BTCUSDT.6       (note: no `_PERP` segment)
+//   A=Binance, 6=Bybit, 3=OKX, Y=Gate.io, 0=BitMEX, 4=HTX/Huobi,
+//   8=dYdX, K=Kraken, S=Aster, W=WOO X, 7=Phemex, 2=Deribit,
+//   T=Lighter, H=Hyperliquid, …
 //
 // `value` returned by /v1/funding-rate is the rate as a PERCENT, not a
 // decimal — cross-checked against Bitget's native API. We divide by 100
@@ -103,32 +101,85 @@ async function fetchVariationalRates() {
 // (`rate8h * periodsPerDay * 365 * 100`) keeps producing percentages.
 
 const COINALYZE_BASE = "https://api.coinalyze.net/v1";
+// Coinalyze's docs advertise 40 req/min per API key, but their burst
+// tolerance is much tighter than the per-minute average suggests —
+// observed 429s firing on as few as 4 requests inside 15 seconds during
+// testing, with retry-after headers around ~27s. The combination below
+// keeps us safely under both budgets:
+//   - 40 symbols/chunk × 3 chunks  = covers our 9 Coinalyze exchanges
+//   - 8s delay between chunks      = 3 requests across ~16s ≈ 11 req/min
+//   - 5-min upstream cache         = at most 36 chunks/hour total
+// This is well inside any reasonable interpretation of "40/min", AND
+// the cache layer absorbs the occasional 429 (errored chunks just don't
+// contribute, the next 5-min refresh tries again).
+const COINALYZE_MAX_SYMBOLS_PER_REQ = 40;
+const COINALYZE_CHUNK_DELAY_MS = 8000;
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// ─── Per-exchange symbol formatters ─────────────────────────────
+// Each formatter takes a normalised base (after MATIC→POL etc) and
+// returns the Coinalyze symbol, or null if the exchange doesn't list
+// that ticker. Patterns confirmed by querying /v1/future-markets for BTC.
+const SYMBOL_FORMATTERS = {
+  // 8h funding, USDT perps — straightforward
+  binance: (base) => `${base}USDT_PERP.A`,
+  bybit:   (base) => `${base}USDT.6`,            // note: no _PERP segment
+  okx:     (base) => `${base}USDT_PERP.3`,
+  bitmex:  (base) => `${base}USDT_PERP.0`,
+  htx:     (base) => `${base}USDT_PERP.4`,
+  aster:   (base) => `${base}USDT.S`,            // same shape as Bybit
+  woox:    (base) => `PERP_${base}_USDT.W`,      // unique pattern
+  // USD perps (no USDT) — slightly different funding cycles
+  dydx:    (base) => `${base}-USD.8`,
+  kraken:  (base) => `pf_${base === "BTC" ? "xbt" : base.toLowerCase()}usd.K`,
+  phemex:  (base) => `${base}USD.7`,
+};
+
+// ─── Per-exchange funding-cycle metadata ────────────────────────
+// Tells the annualization formula how many funding payments happen
+// per day. Most CEX USDT perps run 8h (3 per day). Notable exceptions:
+//   - dYdX v4: 1h cycles (24 per day)
+//   - Kraken Futures: 4h cycles (6 per day)
+const PERIODS_PER_DAY = {
+  binance: 3, bybit: 3, okx: 3, bitmex: 3, htx: 3,
+  aster: 3, woox: 3, phemex: 3,
+  dydx: 24, kraken: 6,
+};
+
+// ─── Per-exchange ticker normalisation ──────────────────────────
+// Most exchanges retired MATIC for POL and scale meme coins by 1000x.
+// Some exchanges may not have done this — easiest to apply uniformly
+// since missing symbols just drop out of the response.
+const SCALED_1000_BASES = new Set(["PEPE", "SHIB", "BONK", "FLOKI"]);
+function normaliseBase(ticker) {
+  let base = ticker === "MATIC" ? "POL" : ticker;
+  if (SCALED_1000_BASES.has(base)) base = `1000${base}`;
+  return base;
+}
 
 function coinalyzeSymbol(exchange, ticker) {
-  // Binance/Bybit deprecated MATIC ticker and replaced with POL.
-  // PEPE trades as price-scaled "1000PEPE" on both venues (and so does
-  // SHIB / BONK / FLOKI if/when those join the TICKERS list).
-  const SCALED_1000 = new Set(["PEPE", "SHIB", "BONK", "FLOKI"]);
-  let base = ticker === "MATIC" ? "POL" : ticker;
-  if (SCALED_1000.has(base)) base = `1000${base}`;
-  if (exchange === "binance") return `${base}USDT_PERP.A`;
-  if (exchange === "bybit") return `${base}USDT.6`;
-  return null;
+  const fmt = SYMBOL_FORMATTERS[exchange];
+  if (!fmt) return null;
+  return fmt(normaliseBase(ticker));
 }
 
 /**
- * Fetch funding rates from Coinalyze for one or more exchanges in a SINGLE
- * request. Coinalyze rate-limits aggressively (free tier ~10 req/min), so
- * batching all blocked-exchange symbols into one call is the cheapest way
- * to stay under the limit.
+ * Fetch funding rates from Coinalyze for many exchanges in as few
+ * requests as possible. Returns the per-exchange/per-ticker shape the
+ * rest of the codebase expects: { rate8h (decimal), periodsPerDay,
+ * markPrice (0 — not exposed by /funding-rate) }.
  *
- * Returns: { [exchange]: { [ticker]: { rate8h, periodsPerDay, markPrice } } }
+ * Chunks the symbol list under COINALYZE_MAX_SYMBOLS_PER_REQ so we
+ * never hit the per-request symbol cap. The 5-min cache upstream keeps
+ * total request volume well under any reasonable rate budget.
  */
 async function fetchCoinalyzeFundingRates(exchanges, tickers) {
   if (!COINALYZE_API_KEY) return {};
   const symbolMap = {};   // symbol → { exchange, ticker }
   const symbols = [];
   for (const exchange of exchanges) {
+    if (!SYMBOL_FORMATTERS[exchange]) continue;
     for (const t of tickers) {
       const sym = coinalyzeSymbol(exchange, t);
       if (!sym) continue;
@@ -139,24 +190,37 @@ async function fetchCoinalyzeFundingRates(exchanges, tickers) {
   if (!symbols.length) return {};
   const out = {};
   for (const exchange of exchanges) out[exchange] = {};
-  try {
-    const data = await fetchJSON(
-      `${COINALYZE_BASE}/funding-rate?symbols=${symbols.join(",")}`,
-      { headers: { api_key: COINALYZE_API_KEY } }
-    );
-    for (const row of data || []) {
-      const map = symbolMap[row.symbol];
-      if (!map) continue;
-      const valuePercent = parseFloat(row.value);
-      if (!Number.isFinite(valuePercent)) continue;
-      out[map.exchange][map.ticker] = {
-        rate8h: valuePercent / 100, // percent → decimal to match native APIs
-        periodsPerDay: 3,           // Binance + Bybit USDT perps both run 8h cycles
-        markPrice: 0,               // not returned by /funding-rate; downstream doesn't read this
-      };
+
+  // Chunk to stay under the per-request symbol cap, then run chunks
+  // sequentially (not in parallel — Coinalyze rate-limits aggressively
+  // on burst, so back-to-back requests are safer than concurrent).
+  const chunks = [];
+  for (let i = 0; i < symbols.length; i += COINALYZE_MAX_SYMBOLS_PER_REQ) {
+    chunks.push(symbols.slice(i, i + COINALYZE_MAX_SYMBOLS_PER_REQ));
+  }
+
+  for (let i = 0; i < chunks.length; i++) {
+    if (i > 0) await sleep(COINALYZE_CHUNK_DELAY_MS);
+    const chunk = chunks[i];
+    try {
+      const data = await fetchJSON(
+        `${COINALYZE_BASE}/funding-rate?symbols=${chunk.join(",")}`,
+        { headers: { api_key: COINALYZE_API_KEY } }
+      );
+      for (const row of data || []) {
+        const map = symbolMap[row.symbol];
+        if (!map) continue;
+        const valuePercent = parseFloat(row.value);
+        if (!Number.isFinite(valuePercent)) continue;
+        out[map.exchange][map.ticker] = {
+          rate8h: valuePercent / 100,
+          periodsPerDay: PERIODS_PER_DAY[map.exchange] || 3,
+          markPrice: 0,
+        };
+      }
+    } catch (e) {
+      console.error(`[Coinalyze] chunk ${i+1}/${chunks.length} error:`, e.message);
     }
-  } catch (e) {
-    console.error(`[Coinalyze] fetch error:`, e.message);
   }
   return out;
 }
@@ -228,18 +292,28 @@ async function fetchAllExchangeRates() {
     console.error("Hyperliquid fetch error:", e.message);
   }
 
-  // ── Binance + Bybit (CEX) — proxied via Coinalyze in ONE request ──
-  // Direct fapi.binance.com (451) and api.bybit.com (403) are
-  // geo-blocked from our US-region VPS. Coinalyze aggregates both as
-  // public reference data. We batch both exchanges into a single
-  // /funding-rate call to stay under the free-tier rate limit
-  // (~10 req/min). Symbol mapping + percent→decimal conversion live in
-  // fetchCoinalyzeFundingRates().
+  // ── Coinalyze-proxied exchanges ──
+  // Two reasons we route through Coinalyze instead of native APIs:
+  //   1. fapi.binance.com (451) and api.bybit.com (403) are geo-blocked
+  //      from our US-region VPS, full stop.
+  //   2. Adding more reference venues directly would mean another seven
+  //      bespoke integrations; Coinalyze covers them all under one API
+  //      with consistent rate/timing semantics.
+  // Symbol mapping + percent→decimal conversion + funding-cycle
+  // metadata all live in fetchCoinalyzeFundingRates() above.
+  // OKX, Gate.io, Bitget aren't included — direct API calls below work
+  // from our VPS and give fresher data than the aggregator.
+  const COINALYZE_EXCHANGES = [
+    "binance", "bybit",                // previously blocked, now restored
+    "bitmex", "htx",                   // major CEX, USDT perps
+    "aster", "woox",                   // newer / quirkier USDT perps
+    "dydx", "kraken", "phemex",        // USD perps (different funding cycle)
+  ];
   const coinalyzeRates = await fetchCoinalyzeFundingRates(
-    ["binance", "bybit"],
+    COINALYZE_EXCHANGES,
     TICKERS
   );
-  for (const exchange of ["binance", "bybit"]) {
+  for (const exchange of COINALYZE_EXCHANGES) {
     for (const [ticker, row] of Object.entries(coinalyzeRates[exchange] || {})) {
       if (!results[ticker]) results[ticker] = {};
       results[ticker][exchange] = row;
@@ -804,7 +878,12 @@ app.get("/api/liquidations/levels", async (req, res) => {
 // ─── Start ──────────────────────────────────────────────────────
 app.listen(PORT, "127.0.0.1", () => {
   console.log(`Variational API running on http://127.0.0.1:${PORT}`);
-  console.log("Data sources: Variational (real), edgeX, Hyperliquid, Binance, Bybit, Bitget, OKX, Gate.io");
+  console.log(
+    "Data sources:",
+    "Variational, edgeX, Hyperliquid (direct);",
+    "Bitget, OKX, Gate.io (direct);",
+    "Binance, Bybit, BitMEX, HTX, Aster, WOO X, dYdX, Kraken, Phemex (Coinalyze)"
+  );
   setTimeout(async () => {
     try {
       await buildOpportunities();

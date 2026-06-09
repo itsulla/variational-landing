@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# Secrets — env file holds COINALYZE_API_KEY
+api/.env

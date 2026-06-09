@@ -1,4 +1,14 @@
 import express from "express";
+import { loadEnvFile } from "node:process";
+
+// Load API keys / secrets from .env (chmod 600). Soft-fail if absent so
+// the server still boots in environments without an env file — endpoints
+// that depend on a missing key will just degrade gracefully.
+try {
+  loadEnvFile(new URL("./.env", import.meta.url));
+} catch (_e) { /* no .env present, that's fine */ }
+
+const COINALYZE_API_KEY = process.env.COINALYZE_API_KEY || "";
 
 const app = express();
 const PORT = 8002;
@@ -73,6 +83,85 @@ async function fetchVariationalRates() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+//  COINALYZE — proxies the US-blocked Binance + Bybit endpoints
+// ═══════════════════════════════════════════════════════════════
+// The VPS lives in a US datacenter, so fapi.binance.com (451) and
+// api.bybit.com (CloudFront 403) are blocked at the IP level. Coinalyze
+// aggregates funding rates from those exchanges as public reference
+// data, so we route the two blocked exchanges through it instead.
+//
+// Exchange codes (verified via /v1/exchanges):
+//   A = Binance, 6 = Bybit, 3 = OKX, Y = Gate.io, H = Hyperliquid, …
+//
+// Symbol shapes (verified via /v1/future-markets for BTC):
+//   Binance USDT perps: BTCUSDT_PERP.A
+//   Bybit  USDT perps: BTCUSDT.6       (note: no `_PERP` segment)
+//
+// `value` returned by /v1/funding-rate is the rate as a PERCENT, not a
+// decimal — cross-checked against Bitget's native API. We divide by 100
+// before storing so the downstream annualization formula
+// (`rate8h * periodsPerDay * 365 * 100`) keeps producing percentages.
+
+const COINALYZE_BASE = "https://api.coinalyze.net/v1";
+
+function coinalyzeSymbol(exchange, ticker) {
+  // Binance/Bybit deprecated MATIC ticker and replaced with POL.
+  // PEPE trades as price-scaled "1000PEPE" on both venues (and so does
+  // SHIB / BONK / FLOKI if/when those join the TICKERS list).
+  const SCALED_1000 = new Set(["PEPE", "SHIB", "BONK", "FLOKI"]);
+  let base = ticker === "MATIC" ? "POL" : ticker;
+  if (SCALED_1000.has(base)) base = `1000${base}`;
+  if (exchange === "binance") return `${base}USDT_PERP.A`;
+  if (exchange === "bybit") return `${base}USDT.6`;
+  return null;
+}
+
+/**
+ * Fetch funding rates from Coinalyze for one or more exchanges in a SINGLE
+ * request. Coinalyze rate-limits aggressively (free tier ~10 req/min), so
+ * batching all blocked-exchange symbols into one call is the cheapest way
+ * to stay under the limit.
+ *
+ * Returns: { [exchange]: { [ticker]: { rate8h, periodsPerDay, markPrice } } }
+ */
+async function fetchCoinalyzeFundingRates(exchanges, tickers) {
+  if (!COINALYZE_API_KEY) return {};
+  const symbolMap = {};   // symbol → { exchange, ticker }
+  const symbols = [];
+  for (const exchange of exchanges) {
+    for (const t of tickers) {
+      const sym = coinalyzeSymbol(exchange, t);
+      if (!sym) continue;
+      symbolMap[sym] = { exchange, ticker: t };
+      symbols.push(sym);
+    }
+  }
+  if (!symbols.length) return {};
+  const out = {};
+  for (const exchange of exchanges) out[exchange] = {};
+  try {
+    const data = await fetchJSON(
+      `${COINALYZE_BASE}/funding-rate?symbols=${symbols.join(",")}`,
+      { headers: { api_key: COINALYZE_API_KEY } }
+    );
+    for (const row of data || []) {
+      const map = symbolMap[row.symbol];
+      if (!map) continue;
+      const valuePercent = parseFloat(row.value);
+      if (!Number.isFinite(valuePercent)) continue;
+      out[map.exchange][map.ticker] = {
+        rate8h: valuePercent / 100, // percent → decimal to match native APIs
+        periodsPerDay: 3,           // Binance + Bybit USDT perps both run 8h cycles
+        markPrice: 0,               // not returned by /funding-rate; downstream doesn't read this
+      };
+    }
+  } catch (e) {
+    console.error(`[Coinalyze] fetch error:`, e.message);
+  }
+  return out;
+}
+
+// ═══════════════════════════════════════════════════════════════
 //  EXCHANGE RATE SOURCES (CEX + DEX)
 // ═══════════════════════════════════════════════════════════════
 
@@ -139,40 +228,22 @@ async function fetchAllExchangeRates() {
     console.error("Hyperliquid fetch error:", e.message);
   }
 
-  // ── Binance (CEX) — bulk ──
-  try {
-    const data = await fetchJSON("https://fapi.binance.com/fapi/v1/premiumIndex");
-    for (const ticker of TICKERS) {
-      const symbol = ticker === "MATIC" ? "POLUSDT" : `${ticker}USDT`;
-      const item = data.find((d) => d.symbol === symbol);
-      if (!item) continue;
+  // ── Binance + Bybit (CEX) — proxied via Coinalyze in ONE request ──
+  // Direct fapi.binance.com (451) and api.bybit.com (403) are
+  // geo-blocked from our US-region VPS. Coinalyze aggregates both as
+  // public reference data. We batch both exchanges into a single
+  // /funding-rate call to stay under the free-tier rate limit
+  // (~10 req/min). Symbol mapping + percent→decimal conversion live in
+  // fetchCoinalyzeFundingRates().
+  const coinalyzeRates = await fetchCoinalyzeFundingRates(
+    ["binance", "bybit"],
+    TICKERS
+  );
+  for (const exchange of ["binance", "bybit"]) {
+    for (const [ticker, row] of Object.entries(coinalyzeRates[exchange] || {})) {
       if (!results[ticker]) results[ticker] = {};
-      results[ticker].binance = {
-        rate8h: parseFloat(item.lastFundingRate) || 0,
-        periodsPerDay: 3,
-        markPrice: parseFloat(item.markPrice) || 0,
-      };
+      results[ticker][exchange] = row;
     }
-  } catch (e) {
-    console.error("Binance fetch error:", e.message);
-  }
-
-  // ── Bybit (CEX) — bulk ──
-  try {
-    const data = await fetchJSON("https://api.bybit.com/v5/market/tickers?category=linear");
-    for (const ticker of TICKERS) {
-      const symbol = ticker === "MATIC" ? "POLUSDT" : `${ticker}USDT`;
-      const item = (data.result?.list || []).find((d) => d.symbol === symbol);
-      if (!item) continue;
-      if (!results[ticker]) results[ticker] = {};
-      results[ticker].bybit = {
-        rate8h: parseFloat(item.fundingRate) || 0,
-        periodsPerDay: 3,
-        markPrice: parseFloat(item.markPrice) || 0,
-      };
-    }
-  } catch (e) {
-    console.error("Bybit fetch error:", e.message);
   }
 
   // ── Bitget (CEX) — bulk ──

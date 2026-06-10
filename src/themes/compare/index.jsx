@@ -547,7 +547,7 @@ function ThreeWayTable({ protocols, windowMeta }) {
   // (100+ TradFi markets summer 2026) and the OLP architecture, not current breadth.
   const RWA_COVERAGE = {
     variational:
-      "~10 live (XAU, XAG, COPPER, CL, PAXG, SPCX); 100+ TradFi markets planned for summer 2026",
+      "25+ live & adding ~1/day (SPCX, OPENAI, ANTHROPIC pre-IPO; TSM, MU, QCOM stocks; EWY/EWJ ETFs; gold, oil); 100+ more this summer",
     hyperliquid:
       "79 on 'xyz' sub-protocol — $1.8B+ 24h vol (incl. AAPL, NVDA, SP500, BRENTOIL, SPCX, RKLB)",
     lighter:

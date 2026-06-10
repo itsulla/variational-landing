@@ -48,6 +48,12 @@ const SECURITY_ITEMS = [
     href: "https://arbiscan.io/address/0x5e91b40467fb8902c46a7b6cb90482363188d645",
     title: "On-chain protocol treasury — 20% of OLP spread revenue routed here",
   },
+  {
+    label: "Dune dashboard",
+    href: "https://dune.com/entropy_advisors/variational-protocol",
+    title:
+      "Official Variational Dune dashboard by Entropy Advisors — TVL, active addresses, treasury inflows, all on-chain",
+  },
 ];
 
 const SERIES_A_HREF =

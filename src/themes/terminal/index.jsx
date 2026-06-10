@@ -185,7 +185,7 @@ const RESPONSES = [
   "[OK] Connected to Variational RFQ Engine",
   "[OK] Privacy mode: ACTIVE",
   '[OK] Fee schedule: 0.00% (permanent)',
-  "[OK] Markets available: 450+",
+  "[OK] Markets available: 475+ (incl. SPCX, OPENAI, ANTHROPIC)",
   "[OK] Ready to execute.",
 ];
 
@@ -561,7 +561,7 @@ export default function TerminalTheme() {
             }}
           >
             Zero trading fees. Tight aggregated spreads. Total execution
-            privacy. Variational's RFQ engine lets you trade 450+ perpetual
+            privacy. Variational's RFQ engine lets you trade 475+ perpetual
             markets without revealing your hand. Currently in private beta.
           </p>
 
@@ -617,14 +617,14 @@ export default function TerminalTheme() {
         >
           <StatCard
             prefix="$"
-            value={224}
+            value={242}
             suffix="B+"
             label="Cumulative Volume"
             inView={statsInView}
           />
           <StatCard
             prefix="$"
-            value={875}
+            value={835}
             suffix="M+"
             label="Open Interest"
             inView={statsInView}
@@ -799,7 +799,7 @@ export default function TerminalTheme() {
           <StepCommand
             number="3"
             command="trade --accumulate-points"
-            description="Execute trades across 450+ perpetual markets. Every dollar of volume earns points toward the airdrop. Zero fees, tight aggregated spreads."
+            description="Execute trades across 475+ markets — crypto, stocks, pre-IPO. Every dollar of volume earns points toward the airdrop. Zero fees, tight aggregated spreads."
           />
 
           <div

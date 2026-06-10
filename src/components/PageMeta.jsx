@@ -9,26 +9,26 @@ const SITE_URL = "https://tryvariational.xyz";
  */
 const PAGE_META = {
   "/": {
-    title: "Trade 450+ Perpetuals with Zero Fees | Variational on Arbitrum",
+    title: "Trade SpaceX & OpenAI Pre-IPO Perps, Stocks & Crypto | Variational",
     description:
-      "Trade perpetual futures on Variational with zero trading fees, tight aggregated spreads, and private RFQ execution. Earn points toward the $VAR airdrop. Built on Arbitrum (currently in private beta).",
+      "Trade SpaceX, OpenAI & Anthropic pre-IPO perps, stocks, ETFs, commodities and 475+ crypto markets with zero trading fees on Variational. Earn points toward the $VAR airdrop. Built on Arbitrum.",
     og: {
-      title: "Trade 450+ Perpetuals with Zero Fees | Variational",
+      title: "Trade Pre-IPO Perps, Stocks & Crypto with Zero Fees | Variational",
       description:
-        "Zero fees. Tight aggregated spreads. Private execution. 450+ perpetual markets on Arbitrum.",
+        "Zero fees. SpaceX, OpenAI & Anthropic pre-IPO perps plus 475+ markets on Arbitrum.",
       image: `${SITE_URL}/og-image.svg`,
     },
     twitter: {
-      title: "Trade 450+ Perpetuals with Zero Fees | Variational",
+      title: "Trade Pre-IPO Perps, Stocks & Crypto with Zero Fees | Variational",
       description:
-        "450+ perp markets. Zero fees. Tight aggregated spreads. Total privacy. Built on Arbitrum.",
+        "475+ markets incl. pre-IPO equities. Zero fees. Total privacy. Built on Arbitrum.",
     },
     jsonLd: null, // homepage uses Organization schema injected separately
   },
   "/terminal": {
     title: "Trade in the Dark | Variational Terminal",
     description:
-      "Zero trading fees. Tight aggregated spreads. Total execution privacy. Trade 450+ perpetual markets on Variational's private RFQ engine.",
+      "Zero trading fees. Tight aggregated spreads. Total execution privacy. Trade 475+ perpetual markets on Variational's private RFQ engine.",
     og: {
       title: "Trade in the Dark | Variational Terminal",
       description:
@@ -62,7 +62,7 @@ const PAGE_META = {
   "/neon": {
     title: "Your Edge Stays Invisible | Variational",
     description:
-      "Private execution, tight aggregated spreads, zero trading fees. Trade 450+ perpetual markets where your strategy stays yours.",
+      "Private execution, tight aggregated spreads, zero trading fees. Trade 475+ perpetual markets where your strategy stays yours.",
     og: {
       title: "Your Edge Stays Invisible | Variational",
       description:
@@ -167,6 +167,30 @@ const PAGE_META = {
         price: "0",
         priceCurrency: "USD",
       },
+    },
+  },
+  "/pre-ipo": {
+    title:
+      "Trade SpaceX, OpenAI & Anthropic Pre-IPO Perps with Zero Fees | Variational",
+    description:
+      "Get long or short exposure to SpaceX (SPCX), OpenAI, and Anthropic before they go public. Pre-IPO perpetuals with 0% trading fees on Variational Omni — no accreditation, no broker, 24/7.",
+    og: {
+      title: "Trade SpaceX, OpenAI & Anthropic Before They IPO",
+      description:
+        "Pre-IPO perpetuals with 0% fees. Long or short SPCX, OPENAI, ANTHROPIC — 24/7, on-chain, no accreditation.",
+      image: `${SITE_URL}/og-preipo.svg`,
+    },
+    twitter: {
+      title: "Trade SpaceX, OpenAI & Anthropic Before They IPO",
+      description:
+        "Pre-IPO perps with 0% fees on Variational Omni. No accreditation, no broker, 24/7 on-chain.",
+    },
+    jsonLd: {
+      "@type": "WebPage",
+      name: "Pre-IPO Perpetuals on Variational",
+      description:
+        "Trade pre-IPO perpetual futures on SpaceX, OpenAI, and Anthropic with zero trading fees.",
+      url: `${SITE_URL}/pre-ipo`,
     },
   },
   "/insights": {

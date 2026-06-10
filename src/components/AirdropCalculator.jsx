@@ -283,7 +283,16 @@ export default function AirdropCalculator({ theme, fonts }) {
       </div>
 
       <div style={disclaimer}>
-        Estimates only. Community allocation set to {communityPct}% (slider above; Variational docs target ~50%). Default points rate (~5 pts/$1M) calibrated from observed trader data. Actual rates depend on weekly platform activity and reward tier. Not financial advice.
+        Estimates only. Community allocation set to {communityPct}% (slider above; Variational docs target ~50%). Default points rate (~5 pts/$1M) calibrated from observed trader data. Actual rates depend on weekly platform activity and reward tier. Cross-check with the community-built{" "}
+        <a
+          href="https://dune.com/entropy_advisors/variational-airdrop-simulator"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: t.accent, textDecoration: "underline" }}
+        >
+          Dune airdrop simulator
+        </a>
+        . Not financial advice.
       </div>
     </div>
   );

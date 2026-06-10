@@ -160,7 +160,7 @@ export function CountdownBanner({ theme }) {
               day: "numeric",
               year: "numeric",
             })}{" "}
-            UTC · Trade now to earn points toward $VAR
+            UTC · Farm points across 475+ markets — crypto, stocks &amp; pre-IPO perps
           </span>
         </div>
 

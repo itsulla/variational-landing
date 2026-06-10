@@ -4,6 +4,7 @@ import { REFERRAL_LINK } from "../config.js";
 
 const NAV_ITEMS = [
   { path: "/", label: "Home" },
+  { path: "/pre-ipo", label: "Pre-IPO Perps", badge: "NEW" },
   { path: "/rates", label: "Funding Rates" },
   { path: "/compare", label: "DEX Compare" },
   { path: "/liquidations", label: "Liquidations" },
@@ -120,6 +121,23 @@ export default function NavHeader({ accent = "#60a5fa", bg = "#0a0e1a", text = "
                 }}
               >
                 {item.label}
+                {item.badge && (
+                  <span
+                    style={{
+                      marginLeft: 6,
+                      padding: "1px 6px",
+                      borderRadius: 999,
+                      fontSize: "0.58rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.06em",
+                      background: accent,
+                      color: bg,
+                      verticalAlign: "middle",
+                    }}
+                  >
+                    {item.badge}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -213,6 +231,21 @@ export default function NavHeader({ accent = "#60a5fa", bg = "#0a0e1a", text = "
                 }}
               >
                 {item.label}
+                {item.badge && (
+                  <span
+                    style={{
+                      marginLeft: 6,
+                      padding: "1px 6px",
+                      borderRadius: 999,
+                      fontSize: "0.6rem",
+                      fontWeight: 700,
+                      background: accent,
+                      color: bg,
+                    }}
+                  >
+                    {item.badge}
+                  </span>
+                )}
               </button>
             );
           })}

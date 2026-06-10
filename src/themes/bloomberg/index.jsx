@@ -195,7 +195,7 @@ function TopBar() {
    ═════════════════════════════════════════════════════════════════════ */
 function TickerBar() {
   const content =
-    "BTC/USDC 0% FEE \u2022 ETH/USDC 0% FEE \u2022 SOL/USDC 0% FEE \u2022 $224B+ VOLUME \u2022 450+ MARKETS \u2022 $50M SERIES A \u2022 PRIVATE BETA \u2022 ";
+    "BTC/USDC 0% FEE \u2022 ETH/USDC 0% FEE \u2022 SOL/USDC 0% FEE \u2022 $242B+ VOLUME \u2022 475+ MARKETS \u2022 SPCX·OPENAI·ANTHROPIC PRE-IPO \u2022 $50M SERIES A \u2022 PRIVATE BETA \u2022 ";
 
   const track = {
     overflow: "hidden",
@@ -249,7 +249,7 @@ function Hero() {
     <section style={section}>
       <div style={container}>
         <div style={{ ...sectionLabel, marginBottom: 12 }}>
-          MARKET BRIEF / MARCH 2026
+          MARKET BRIEF / {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase()}
         </div>
         <h1
           style={{

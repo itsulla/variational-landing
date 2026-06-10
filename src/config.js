@@ -6,6 +6,34 @@ export const RATES_API_BASE =
 
 export const VARIATIONAL_LAUNCH_DATE = "2025-01-01";
 
+export const DUNE_DASHBOARD_URL =
+  "https://dune.com/entropy_advisors/variational-protocol";
+export const DUNE_AIRDROP_SIM_URL =
+  "https://dune.com/entropy_advisors/variational-airdrop-simulator";
+
+/* Recent RWA / TradFi listings on Variational Omni.
+ * Curated from @variational_io announcements (each ticker verified
+ * against the live stats API before adding). Variational has been
+ * listing roughly one new TradFi market per day since the May 20, 2026
+ * Phase-1 launch. Newest first. Dates are used only for ordering — the
+ * UI shows ticker/name/type, since some mid-window dates are
+ * approximate (between announcement sweeps). */
+export const RECENT_LISTINGS = [
+  { ticker: "QCOM", name: "Qualcomm", type: "Stock", date: "2026-06-09" },
+  { ticker: "MU", name: "Micron", type: "Stock", date: "2026-06-09" },
+  { ticker: "TSM", name: "Taiwan Semiconductor", type: "Stock", date: "2026-06-08" },
+  { ticker: "EWY", name: "South Korea ETF", type: "ETF", date: "2026-06-08" },
+  { ticker: "EWJ", name: "Japan ETF", type: "ETF", date: "2026-06-08" },
+  { ticker: "OPENAI", name: "OpenAI", type: "Pre-IPO", date: "2026-06-01" },
+  { ticker: "ANTHROPIC", name: "Anthropic", type: "Pre-IPO", date: "2026-06-01" },
+  { ticker: "TSLA", name: "Tesla", type: "Stock", date: "2026-05-28" },
+  { ticker: "SPCX", name: "SpaceX", type: "Pre-IPO", date: "2026-05-21" },
+  { ticker: "XAU", name: "Gold", type: "Commodity", date: "2026-05-20" },
+  { ticker: "XAG", name: "Silver", type: "Commodity", date: "2026-05-20" },
+  { ticker: "COPPER", name: "Copper", type: "Commodity", date: "2026-05-20" },
+  { ticker: "CL", name: "WTI Crude Oil", type: "Commodity", date: "2026-05-20" },
+];
+
 export function swapReferralCode(newCode) {
   REFERRAL_CODE = newCode;
   REFERRAL_LINK = `https://omni.variational.io/?ref=${newCode}`;
@@ -17,16 +45,16 @@ export const SERIES_A_ARTICLE_URL =
 export const MARKET_DATA = {
   variational: {
     name: "Variational",
-    cumulativeVolume: "$224B+",
-    openInterest: "$875M+",
-    markets: "450+",
+    cumulativeVolume: "$242B+",
+    openInterest: "$835M+",
+    markets: "475+",
     raised: "$50M Series A (May 2026)",
     communityAllocation: "Up to ~50%",
     fdv: "Pre-TGE",
     tradingFees: "0.00% (permanent)",
     executionPrivacy: "Private RFQ (orders not public)",
     blockTradeSlippage: "Minimal (aggregated CEX/DEX/TradFi depth)",
-    tradableMarkets: "450+ markets, one cross-margined account",
+    tradableMarkets: "475+ markets incl. pre-IPO (SpaceX, OpenAI, Anthropic), stocks, ETFs, commodities",
     executionEdge: "OLP captures the spread, not fees — passes tighter pricing to traders",
     architecture: "Private RFQ (Omni LP)",
     status: "Mainnet (private beta)",

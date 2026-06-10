@@ -12,6 +12,7 @@ import {
   REFERRAL_CODE,
   RATES_API_BASE,
   MARKET_DATA,
+  RECENT_LISTINGS,
   getWeeksRemaining,
 } from "../../config.js";
 
@@ -150,7 +151,7 @@ const STEPS = [
   {
     step: 3,
     title: "Trade & Accumulate Points",
-    desc: "Trade any of 450+ markets. Every dollar of volume earns points toward the $VAR airdrop.",
+    desc: "Trade any of 475+ markets — crypto, stocks, ETFs, pre-IPO. Every dollar of volume earns points toward the $VAR airdrop.",
   },
 ];
 
@@ -249,13 +250,13 @@ export default function OriginalTheme() {
           style={{
             ...sectionHeading,
             fontSize: "clamp(2rem, 5vw, 3.2rem)",
-            maxWidth: 800,
+            maxWidth: 860,
             marginBottom: 24,
           }}
         >
-          Trade 450+ perpetual markets.{" "}
-          <span style={{ color: THEME.accent }}>Zero fees.</span> Tight spreads.
-          Total privacy.
+          Trade <span style={{ color: THEME.accent }}>SpaceX, OpenAI &amp;
+          Anthropic pre-IPO</span>, stocks, gold, oil and 475+ crypto perps.
+          Zero fees.
         </h1>
 
         <p
@@ -263,14 +264,15 @@ export default function OriginalTheme() {
             fontSize: "clamp(1rem, 2vw, 1.15rem)",
             color: `${THEME.text}bb`,
             lineHeight: 1.7,
-            maxWidth: 620,
+            maxWidth: 660,
             marginBottom: 36,
           }}
         >
-          Variational is a peer-to-peer derivatives protocol on Arbitrum. Trades
-          execute through a private RFQ engine that aggregates CEX, DEX, and
-          TradFi liquidity into tight, deterministic quotes — at 0% trading
-          fees. No public order book. No front-running.
+          Variational is a peer-to-peer derivatives protocol on Arbitrum that
+          puts crypto, stocks, ETFs, commodities, and pre-IPO equities in one
+          cross-margined account. Trades execute through a private RFQ engine
+          that aggregates CEX, DEX, and TradFi liquidity — at 0% trading fees,
+          with no public order book and no front-running.
         </p>
 
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
@@ -356,6 +358,79 @@ export default function OriginalTheme() {
 
         {/* Social proof */}
         <SocialProof theme={THEME} fonts={FONTS} />
+      </section>
+
+      {/* ===== RECENTLY LISTED (TradFi expansion) ===== */}
+      <section style={section}>
+        <div style={sectionLabel}>// Recently listed</div>
+        <h2 style={{ ...sectionHeading, marginBottom: 12 }}>
+          New real-world markets, almost daily
+        </h2>
+        <p
+          style={{
+            fontSize: "0.95rem",
+            color: `${THEME.text}bb`,
+            lineHeight: 1.7,
+            maxWidth: 640,
+            marginBottom: 24,
+          }}
+        >
+          Since the May 2026 TradFi launch, Variational has listed a new
+          real-world market roughly every day — pre-IPO giants, semiconductor
+          stocks, country ETFs, and commodities. 100+ more TradFi listings are
+          planned this summer.{" "}
+          <a
+            href="/pre-ipo"
+            style={{ color: THEME.accent, textDecoration: "underline" }}
+          >
+            See the pre-IPO lineup →
+          </a>
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+          {RECENT_LISTINGS.map((l) => (
+            <div
+              key={l.ticker}
+              title={`${l.name} — ${l.type}`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 14px",
+                borderRadius: 8,
+                background: `${THEME.accent}08`,
+                border: `1px solid ${
+                  l.type === "Pre-IPO" ? `${THEME.accent}66` : `${THEME.muted}33`
+                }`,
+                fontFamily: FONTS.mono,
+                fontSize: "0.78rem",
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: 700,
+                  color: l.type === "Pre-IPO" ? THEME.accent : THEME.text,
+                }}
+              >
+                ${l.ticker}
+              </span>
+              <span style={{ color: THEME.muted, fontSize: "0.7rem" }}>
+                {l.name}
+              </span>
+              <span
+                style={{
+                  fontSize: "0.6rem",
+                  padding: "1px 6px",
+                  borderRadius: 999,
+                  background: `${THEME.accent}15`,
+                  color: THEME.accent,
+                  letterSpacing: "0.04em",
+                }}
+              >
+                {l.type}
+              </span>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* ===== WHY VARIATIONAL ===== */}

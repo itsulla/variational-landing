@@ -16,6 +16,7 @@ const InsightsIndex = lazy(() => import("./themes/insights/index.jsx"));
 const WhyPerpDexesCoexist = lazy(() =>
   import("./themes/insights/why-perp-dexes-coexist.jsx")
 );
+const PreIpo = lazy(() => import("./themes/preipo/index.jsx"));
 
 /* Nav header color presets per route */
 const NAV_COLORS = {
@@ -27,6 +28,7 @@ const NAV_COLORS = {
   "/compare": { accent: "#FFB800", bg: "#0A0A0A", text: "#e8e0d0" },
   "/liquidations": { accent: "#00FF41", bg: "#000000", text: "#00FF41" },
   "/insights": { accent: "#60a5fa", bg: "#0a0e1a", text: "#e8ecf4" },
+  "/pre-ipo": { accent: "#7dd3fc", bg: "#080b14", text: "#eef1f8" },
 };
 
 /* /insights uses the same nav-color palette as the home theme — the
@@ -83,6 +85,10 @@ export default function App() {
             path="/insights/why-perp-dexes-coexist"
             element={<WhyPerpDexesCoexist />}
           />
+          {/* /spcx and /spacex are vanity aliases for ad campaigns */}
+          <Route path="/pre-ipo" element={<PreIpo />} />
+          <Route path="/spcx" element={<PreIpo />} />
+          <Route path="/spacex" element={<PreIpo />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

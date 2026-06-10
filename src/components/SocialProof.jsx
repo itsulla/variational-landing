@@ -46,7 +46,7 @@ export default function SocialProof({ theme, fonts }) {
         </svg>
       ),
       title: "Portfolio margin",
-      desc: "Deribit-compatible cross-margining across 450+ perpetual markets",
+      desc: "Deribit-compatible cross-margining across 475+ markets incl. pre-IPO equities",
     },
   ];
 

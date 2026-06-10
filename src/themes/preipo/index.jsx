@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Footer from "../../components/Footer.jsx";
 import TrustStrip from "../../components/TrustStrip.jsx";
 import CopyCode from "../../components/CopyCode.jsx";
+import OnboardingBanner from "../../components/OnboardingBanner.jsx";
 import {
   REFERRAL_LINK,
   REFERRAL_CODE,
@@ -95,6 +96,151 @@ function injectFonts() {
   link.href =
     "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap";
   document.head.appendChild(link);
+}
+
+/* ─── Cross-venue price comparison ───────────────────────────────── */
+const VENUE_LABELS = {
+  variational: "Variational",
+  hyperliquid: "Hyperliquid (xyz)",
+  lighter: "Lighter",
+  okx: "OKX",
+  "gate.io": "Gate.io",
+};
+const ORACLE_LABELS = {
+  "hyperliquid-oracle": "HL oracle feed",
+  "gate-index": "Gate index",
+};
+
+function PriceComparison() {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () =>
+      fetch(`${RATES_API_BASE}/api/preipo/prices`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (!cancelled && d) setData(d); })
+        .catch(() => {});
+    load();
+    const id = setInterval(load, 60 * 1000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+
+  if (!data) return null;
+
+  const container = { maxWidth: 980, margin: "0 auto", padding: "0 24px" };
+  const fmtPrice = (p) =>
+    p >= 1000 ? `$${p.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : `$${p.toFixed(2)}`;
+  const diffColor = (d) =>
+    Math.abs(d) < 0.05 ? THEME.muted : d > 0 ? THEME.positive : "#f87171";
+
+  return (
+    <section style={{ padding: "48px 0", background: THEME.bgAlt }}>
+      <div style={container}>
+        <h2
+          style={{
+            fontFamily: FONTS.heading,
+            fontSize: "clamp(1.5rem, 3vw, 2rem)",
+            fontWeight: 700,
+            letterSpacing: "-0.01em",
+            margin: "0 0 10px",
+          }}
+        >
+          Same contract, five venues — live price check
+        </h2>
+        <p style={{ fontSize: "0.92rem", lineHeight: 1.65, color: THEME.textDim, maxWidth: 720, margin: "0 0 24px" }}>
+          Pre-IPO perps have no exchange-traded underlying, so each venue's
+          oracle aggregates private-market marks — and prices drift apart.
+          Refreshed every minute, deviation shown against the cross-venue
+          median. Persistent gaps are where the basis trades live.
+        </p>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: 18,
+          }}
+        >
+          {["SPCX", "OPENAI", "ANTHROPIC"].map((a) => {
+            const info = data.assets?.[a];
+            if (!info || !info.venues?.length) return null;
+            return (
+              <div
+                key={a}
+                style={{
+                  background: THEME.bg,
+                  border: `1px solid ${THEME.hairline}`,
+                  borderRadius: 12,
+                  padding: "20px 20px 16px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14 }}>
+                  <span style={{ fontFamily: FONTS.mono, fontWeight: 700, fontSize: "1.05rem", color: THEME.accent }}>
+                    ${a}
+                  </span>
+                  <span style={{ fontFamily: FONTS.mono, fontSize: "0.72rem", color: THEME.muted }}>
+                    median {fmtPrice(info.median)}
+                  </span>
+                </div>
+                {info.venues.map((v) => (
+                  <div
+                    key={v.venue}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "7px 10px",
+                      marginBottom: 4,
+                      borderRadius: 6,
+                      background: v.venue === "variational" ? `${THEME.accent}12` : "transparent",
+                      border: v.venue === "variational" ? `1px solid ${THEME.accent}44` : "1px solid transparent",
+                    }}
+                  >
+                    <span style={{ fontSize: "0.8rem", color: v.venue === "variational" ? THEME.text : THEME.textDim, fontWeight: v.venue === "variational" ? 600 : 400 }}>
+                      {VENUE_LABELS[v.venue] || v.venue}
+                    </span>
+                    <span style={{ fontFamily: FONTS.mono, fontSize: "0.8rem", color: THEME.text }}>
+                      {fmtPrice(v.price)}{" "}
+                      <span style={{ color: diffColor(v.diff_pct || 0), fontSize: "0.7rem" }}>
+                        {(v.diff_pct || 0) >= 0 ? "+" : ""}{(v.diff_pct || 0).toFixed(2)}%
+                      </span>
+                    </span>
+                  </div>
+                ))}
+                {info.oracles?.map((o) => (
+                  <div
+                    key={o.source}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      padding: "6px 10px",
+                      borderTop: `1px dashed ${THEME.hairline}`,
+                      marginTop: 6,
+                    }}
+                  >
+                    <span style={{ fontSize: "0.72rem", color: THEME.muted, fontStyle: "italic" }}>
+                      ⚓ {ORACLE_LABELS[o.source] || o.source}
+                    </span>
+                    <span style={{ fontFamily: FONTS.mono, fontSize: "0.74rem", color: THEME.muted }}>
+                      {fmtPrice(o.price)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+        <p style={{ marginTop: 14, fontSize: "0.68rem", color: THEME.muted, lineHeight: 1.6 }}>
+          Sources: venue public APIs (mark price where available, last trade
+          for Lighter). ⚓ Oracle rows are the closest public view of the
+          off-chain reference each venue prices against — Hyperliquid exposes
+          its oracle feed directly; Gate publishes its index. The underlying
+          private-market data (Caplight/Forge-style secondary marks) has no
+          free public API.
+        </p>
+      </div>
+    </section>
+  );
 }
 
 export default function PreIpoTheme() {
@@ -318,6 +464,9 @@ export default function PreIpoTheme() {
         </div>
       </section>
 
+      {/* ───── CROSS-VENUE PRICE COMPARISON ───── */}
+      <PriceComparison />
+
       {/* ───── HOW PRE-IPO PERPS WORK ───── */}
       <section style={{ padding: "40px 0 48px", background: THEME.bgAlt }}>
         <div style={container}>
@@ -488,6 +637,13 @@ export default function PreIpoTheme() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ───── ONBOARDING (CEX → Arbitrum → Variational) ───── */}
+      <section style={{ padding: "8px 0 40px" }}>
+        <div style={{ maxWidth: 980, margin: "0 auto", padding: "0 24px" }}>
+          <OnboardingBanner theme={THEME} fonts={FONTS} />
         </div>
       </section>
 

@@ -938,6 +938,128 @@ app.get("/api/compare/three", async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
+//  PRE-IPO CROSS-VENUE PRICES — SPCX / OPENAI / ANTHROPIC
+// ═══════════════════════════════════════════════════════════════
+// Pulls marks for the three flagship pre-IPO perps from every venue
+// with a public API reachable from this VPS:
+//   - Variational (mark_price), HL xyz sub-dex (markPx + oraclePx),
+//     Lighter (last trade), OKX (markPx), Gate.io (mark + index).
+// "Oracle" rows: pre-IPO contracts have no exchange-traded underlying;
+// each venue's oracle aggregates private-market marks (Caplight/Forge-
+// style secondaries). Hyperliquid exposes its oracle directly
+// (oraclePx); Gate exposes its index_price. Those are the closest
+// public windows into the off-chain reference price.
+
+const PRE_IPO_ASSETS = ["SPCX", "OPENAI", "ANTHROPIC"];
+
+async function buildPreIpoPrices() {
+  const assets = {};
+  for (const a of PRE_IPO_ASSETS) {
+    assets[a] = { venues: [], oracles: [] };
+  }
+  const push = (asset, venue, price, extra = {}) => {
+    const p = parseFloat(price);
+    if (!Number.isFinite(p) || p <= 0) return;
+    assets[asset].venues.push({ venue, price: p, ...extra });
+  };
+
+  const tasks = [
+    // Variational
+    (async () => {
+      const d = await fetchJSON(VARIATIONAL_API);
+      for (const l of d.listings || []) {
+        const t = l.ticker.toUpperCase();
+        if (PRE_IPO_ASSETS.includes(t)) {
+          push(t, "variational", l.mark_price, {
+            kind: "mark",
+            vol24h: parseFloat(l.volume_24h) || 0,
+          });
+        }
+      }
+    })(),
+    // Hyperliquid xyz sub-dex (also exposes its oracle)
+    (async () => {
+      const [meta, ctxs] = await fetchJSON("https://api.hyperliquid.xyz/info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "metaAndAssetCtxs", dex: "xyz" }),
+      });
+      const names = (meta?.universe || []).map((u) => u.name);
+      for (const a of PRE_IPO_ASSETS) {
+        const i = names.indexOf(`xyz:${a}`);
+        if (i === -1 || !ctxs?.[i]) continue;
+        push(a, "hyperliquid", ctxs[i].markPx, {
+          kind: "mark",
+          vol24h: parseFloat(ctxs[i].dayNtlVlm) || 0,
+        });
+        const op = parseFloat(ctxs[i].oraclePx);
+        if (Number.isFinite(op) && op > 0) {
+          assets[a].oracles.push({ source: "hyperliquid-oracle", price: op });
+        }
+      }
+    })(),
+    // Lighter (last trade — no mark exposed on this endpoint)
+    (async () => {
+      const d = await fetchJSON(
+        "https://mainnet.zklighter.elliot.ai/api/v1/exchangeStats"
+      );
+      for (const s of d?.order_book_stats || []) {
+        const sym = s.symbol.toUpperCase();
+        if (PRE_IPO_ASSETS.includes(sym)) {
+          push(sym, "lighter", s.last_trade_price, {
+            kind: "last",
+            vol24h: parseFloat(s.daily_quote_token_volume) || 0,
+          });
+        }
+      }
+    })(),
+    // OKX
+    ...PRE_IPO_ASSETS.map((a) => (async () => {
+      const d = await fetchJSON(
+        `https://www.okx.com/api/v5/public/mark-price?instId=${a}-USDT-SWAP`
+      );
+      push(a, "okx", d?.data?.[0]?.markPx, { kind: "mark" });
+    })()),
+    // Gate.io (mark + index — Gate's index doubles as an oracle view)
+    ...PRE_IPO_ASSETS.map((a) => (async () => {
+      const d = await fetchJSON(
+        `https://api.gateio.ws/api/v4/futures/usdt/contracts/${a}_USDT`
+      );
+      push(a, "gate.io", d?.mark_price, { kind: "mark" });
+      const ip = parseFloat(d?.index_price);
+      if (Number.isFinite(ip) && ip > 0) {
+        assets[a].oracles.push({ source: "gate-index", price: ip });
+      }
+    })()),
+  ];
+  await Promise.allSettled(tasks);
+
+  // Median + per-venue deviation
+  for (const a of PRE_IPO_ASSETS) {
+    const prices = assets[a].venues.map((v) => v.price).sort((x, y) => x - y);
+    const n = prices.length;
+    const median = n
+      ? n % 2
+        ? prices[(n - 1) / 2]
+        : (prices[n / 2 - 1] + prices[n / 2]) / 2
+      : null;
+    assets[a].median = median;
+    if (median) {
+      for (const v of assets[a].venues) {
+        v.diff_pct = Math.round(((v.price - median) / median) * 10000) / 100;
+      }
+      for (const o of assets[a].oracles) {
+        o.diff_pct = Math.round(((o.price - median) / median) * 10000) / 100;
+      }
+    }
+    assets[a].venues.sort((x, y) => x.price - y.price);
+  }
+  return { assets, updated_at: new Date().toISOString() };
+}
+
+app.get("/api/preipo/prices", cached("preipo_prices", 60 * 1000, buildPreIpoPrices));
+
+// ═══════════════════════════════════════════════════════════════
 //  LIQUIDATIONS ENDPOINTS
 // ═══════════════════════════════════════════════════════════════
 

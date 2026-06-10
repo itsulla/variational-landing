@@ -7,6 +7,7 @@ import CopyCode from "../../components/CopyCode.jsx";
 import ToolButtons from "../../components/ToolButtons.jsx";
 import SocialProof from "../../components/SocialProof.jsx";
 import AnimatedCounter from "../../components/AnimatedCounter.jsx";
+import OnboardingBanner from "../../components/OnboardingBanner.jsx";
 import {
   REFERRAL_LINK,
   REFERRAL_CODE,
@@ -526,9 +527,13 @@ export default function OriginalTheme() {
       {/* ===== GET STARTED ===== */}
       <section style={section}>
         <div style={sectionLabel}>// Get started</div>
-        <h2 style={{ ...sectionHeading, marginBottom: 40 }}>
+        <h2 style={{ ...sectionHeading, marginBottom: 24 }}>
           Three steps to start earning
         </h2>
+
+        <div style={{ marginBottom: 32 }}>
+          <OnboardingBanner theme={THEME} fonts={FONTS} />
+        </div>
 
         <div
           style={{

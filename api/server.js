@@ -182,14 +182,17 @@ async function fetchVariationalRates() {
   const rates = {};
   for (const listing of data.listings || []) {
     const ticker = listing.ticker.toUpperCase();
-    // Variational funding_rate: the docs say "multiply by 100 for %"
-    // but comparing with other exchanges, the values align when treated as
-    // already-percentage (e.g. -0.003800 = -0.0038% per interval)
-    // BTC: -0.0038% * 3/day * 365 = ~-4.16% annual — consistent with market
+    // Variational funding_rate is the ANNUALIZED rate as a decimal.
+    // Verified 2026-06-10: BTC/ETH/SOL/WIF all read exactly 0.109500,
+    // which is the protocol's fixed interest baseline from the docs
+    // (0.00125%/hour × 24 × 365 = 10.95%/year) — i.e. majors sitting at
+    // neutral funding. funding_interval_s (4h/8h) is the PAYMENT cadence
+    // only and must not multiply the rate. The previous per-interval
+    // interpretation inflated Variational rates ~11x (BTC showed +120%/yr
+    // instead of +10.95%/yr) and produced absurd arb spreads.
     const intervalSeconds = listing.funding_interval_s || 28800;
-    const periodsPerDay = 86400 / intervalSeconds;
     const rateDecimal = parseFloat(listing.funding_rate) || 0;
-    const annualRate = rateDecimal * periodsPerDay * 365; // annualized %
+    const annualRate = rateDecimal * 100; // annualized decimal → percent
 
     const longOI = parseFloat(listing.open_interest?.long_open_interest) || 0;
     const shortOI = parseFloat(listing.open_interest?.short_open_interest) || 0;
@@ -263,13 +266,17 @@ const SYMBOL_FORMATTERS = {
 
 // ─── Per-exchange funding-cycle metadata ────────────────────────
 // Tells the annualization formula how many funding payments happen
-// per day. Most CEX USDT perps run 8h (3 per day). Notable exceptions:
-//   - dYdX v4: 1h cycles (24 per day)
-//   - Kraken Futures: 4h cycles (6 per day)
+// per day. Coinalyze reports the rate PER NATIVE INTERVAL (verified:
+// pf_xbtusd.K matched Kraken's own per-hour relative rate exactly).
+// Most CEX USDT perps run 8h (3 per day). Exceptions:
+//   - dYdX v4: 1h cycles (24/day)
+//   - Kraken Futures: 1h relative funding (24/day) — verified against
+//     futures.kraken.com /tickers: fundingRate/markPrice == Coinalyze
+//     value to 2 decimal places, both per hour.
 const PERIODS_PER_DAY = {
   binance: 3, bybit: 3, okx: 3, bitmex: 3, htx: 3,
   aster: 3, woox: 3, phemex: 3,
-  dydx: 24, kraken: 6,
+  dydx: 24, kraken: 24,
 };
 
 // ─── Per-exchange ticker normalisation ──────────────────────────
@@ -376,7 +383,14 @@ async function fetchAllExchangeRates() {
       );
       const item = data?.data?.[0];
       if (!item) return;
-      // edgeX fundingRate is per-interval (4h), annualize
+      // edgeX fundingRate is a DECIMAL per 4h interval (verified: BTC reads
+      // exactly 0.000050 = the textbook 4h neutral → 10.95%/yr).
+      // Skip dead listings: edgeX keeps delisted/empty markets in the API
+      // with $0 volume and a pinned garbage funding rate (ARB sat at
+      // 0.359%/4h = 786%/yr with zero OI). An untradeable market is not
+      // an arb opportunity.
+      const volume24h = parseFloat(item.value) || 0;
+      if (volume24h < 10_000) return;
       const rate = parseFloat(item.fundingRate) || 0;
       const fundingTime = parseInt(item.fundingTime) || 0;
       const nextFundingTime = parseInt(item.nextFundingTime) || 0;
@@ -387,7 +401,7 @@ async function fetchAllExchangeRates() {
         rate8h: rate, // store raw rate, we'll annualize later
         periodsPerDay,
         markPrice: parseFloat(item.markPrice) || 0,
-        volume24h: parseFloat(item.value) || 0,
+        volume24h,
       };
     } catch (_e) { /* skip */ }
   });
@@ -408,7 +422,10 @@ async function fetchAllExchangeRates() {
       if (!results[ticker]) results[ticker] = {};
       results[ticker].hyperliquid = {
         rate8h: parseFloat(ctx.funding) || 0,
-        periodsPerDay: 3, // 8h intervals
+        // HL pays funding EVERY HOUR and assetCtxs.funding is the hourly
+        // rate (verified by magnitude: BTC ~-7e-6/h ≈ -6%/yr, matching
+        // market levels; treating it as 8h understates HL by 8x).
+        periodsPerDay: 24,
         markPrice: parseFloat(ctx.markPx) || 0,
         volume24h: parseFloat(ctx.dayNtlVlm) || 0,
       };

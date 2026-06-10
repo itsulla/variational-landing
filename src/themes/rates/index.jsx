@@ -25,29 +25,30 @@ const FONTS = {
   mono: "'IBM Plex Mono', monospace",
 };
 
-/* ─── Mock data ──────────────────────────────────────────────────── */
+/* ─── Mock data ───────────────────────────────────────────────────
+   Fallback ONLY for when the API is unreachable. Magnitudes mirror
+   real post-audit output (Variational majors sit at the ~10.95%/yr
+   neutral baseline; realistic spreads are ~5-25%/yr, not 50-100%).
+   Keep these aligned with /api/rates/opportunities semantics. */
 const MOCK_OPPORTUNITIES = [
-  { ticker: "BTC", var_rate_annual: 94.80, cex_exchange: "binance", cex_rate_annual: 2.81, spread_annual: 91.99, direction: "short_var_long_cex", daily_pnl_10k: 25.20, daily_pnl_50k: 126.00, daily_pnl_100k: 252.00, var_mark_price: 86250.00, volume_24h: 724957891 },
-  { ticker: "ETH", var_rate_annual: 48.20, cex_exchange: "bybit", cex_rate_annual: 3.15, spread_annual: 45.05, direction: "short_var_long_cex", daily_pnl_10k: 12.34, daily_pnl_50k: 61.71, daily_pnl_100k: 123.42, var_mark_price: 2180.50, volume_24h: 412000000 },
-  { ticker: "SOL", var_rate_annual: 38.10, cex_exchange: "hyperliquid", cex_rate_annual: -2.40, spread_annual: 40.50, direction: "short_var_long_cex", daily_pnl_10k: 11.10, daily_pnl_50k: 55.48, daily_pnl_100k: 110.96, var_mark_price: 138.20, volume_24h: 289000000 },
-  { ticker: "DOGE", var_rate_annual: 35.60, cex_exchange: "binance", cex_rate_annual: 1.22, spread_annual: 34.38, direction: "short_var_long_cex", daily_pnl_10k: 9.42, daily_pnl_50k: 47.10, daily_pnl_100k: 94.19, var_mark_price: 0.1720, volume_24h: 156000000 },
-  { ticker: "AVAX", var_rate_annual: 32.15, cex_exchange: "bybit", cex_rate_annual: 4.20, spread_annual: 27.95, direction: "short_var_long_cex", daily_pnl_10k: 7.66, daily_pnl_50k: 38.29, daily_pnl_100k: 76.58, var_mark_price: 22.40, volume_24h: 98000000 },
-  { ticker: "ARB", var_rate_annual: 28.90, cex_exchange: "binance", cex_rate_annual: 2.10, spread_annual: 26.80, direction: "short_var_long_cex", daily_pnl_10k: 7.34, daily_pnl_50k: 36.71, daily_pnl_100k: 73.42, var_mark_price: 0.52, volume_24h: 67000000 },
-  { ticker: "LINK", var_rate_annual: 25.40, cex_exchange: "hyperliquid", cex_rate_annual: -1.30, spread_annual: 26.70, direction: "short_var_long_cex", daily_pnl_10k: 7.32, daily_pnl_50k: 36.58, daily_pnl_100k: 73.15, var_mark_price: 14.80, volume_24h: 54000000 },
-  { ticker: "OP", var_rate_annual: 22.80, cex_exchange: "bybit", cex_rate_annual: 1.85, spread_annual: 20.95, direction: "short_var_long_cex", daily_pnl_10k: 5.74, daily_pnl_50k: 28.70, daily_pnl_100k: 57.40, var_mark_price: 0.92, volume_24h: 43000000 },
-  { ticker: "WIF", var_rate_annual: 19.50, cex_exchange: "binance", cex_rate_annual: 5.80, spread_annual: 13.70, direction: "short_var_long_cex", daily_pnl_10k: 3.75, daily_pnl_50k: 18.77, daily_pnl_100k: 37.53, var_mark_price: 0.68, volume_24h: 38000000 },
-  { ticker: "PEPE", var_rate_annual: 18.20, cex_exchange: "binance", cex_rate_annual: 3.40, spread_annual: 14.80, direction: "short_var_long_cex", daily_pnl_10k: 4.05, daily_pnl_50k: 20.27, daily_pnl_100k: 40.55, var_mark_price: 0.0000089, volume_24h: 31000000 },
-  { ticker: "MATIC", var_rate_annual: 15.60, cex_exchange: "bybit", cex_rate_annual: 2.30, spread_annual: 13.30, direction: "short_var_long_cex", daily_pnl_10k: 3.64, daily_pnl_50k: 18.22, daily_pnl_100k: 36.44, var_mark_price: 0.38, volume_24h: 28000000 },
-  { ticker: "SUI", var_rate_annual: 14.20, cex_exchange: "hyperliquid", cex_rate_annual: 1.10, spread_annual: 13.10, direction: "short_var_long_cex", daily_pnl_10k: 3.59, daily_pnl_50k: 17.95, daily_pnl_100k: 35.89, var_mark_price: 2.85, volume_24h: 25000000 },
+  { ticker: "LINK", var_rate_annual: -13.38, cex_exchange: "hyperliquid", cex_rate_annual: 10.95, spread_annual: 24.33, direction: "long_var_short_cex", daily_pnl_10k: 6.66, daily_pnl_50k: 33.32, daily_pnl_100k: 66.65, var_mark_price: 14.80, volume_24h: 54000000 },
+  { ticker: "OP", var_rate_annual: -21.19, cex_exchange: "okx", cex_rate_annual: 2.41, spread_annual: 23.60, direction: "long_var_short_cex", daily_pnl_10k: 6.47, daily_pnl_50k: 32.33, daily_pnl_100k: 64.66, var_mark_price: 0.92, volume_24h: 43000000 },
+  { ticker: "ETH", var_rate_annual: 10.95, cex_exchange: "edgex", cex_rate_annual: -11.29, spread_annual: 22.24, direction: "short_var_long_cex", daily_pnl_10k: 6.09, daily_pnl_50k: 30.47, daily_pnl_100k: 60.93, var_mark_price: 2180.50, volume_24h: 412000000 },
+  { ticker: "SUI", var_rate_annual: -5.24, cex_exchange: "hyperliquid", cex_rate_annual: 10.95, spread_annual: 16.19, direction: "long_var_short_cex", daily_pnl_10k: 4.44, daily_pnl_50k: 22.18, daily_pnl_100k: 44.36, var_mark_price: 2.85, volume_24h: 25000000 },
+  { ticker: "SOL", var_rate_annual: 10.95, cex_exchange: "gate.io", cex_rate_annual: -4.38, spread_annual: 15.33, direction: "short_var_long_cex", daily_pnl_10k: 4.20, daily_pnl_50k: 21.00, daily_pnl_100k: 42.00, var_mark_price: 138.20, volume_24h: 289000000 },
+  { ticker: "BTC", var_rate_annual: 10.95, cex_exchange: "okx", cex_rate_annual: -1.70, spread_annual: 12.65, direction: "short_var_long_cex", daily_pnl_10k: 3.47, daily_pnl_50k: 17.33, daily_pnl_100k: 34.66, var_mark_price: 86250.00, volume_24h: 724957891 },
+  { ticker: "DOGE", var_rate_annual: 1.52, cex_exchange: "hyperliquid", cex_rate_annual: 10.95, spread_annual: 9.43, direction: "long_var_short_cex", daily_pnl_10k: 2.58, daily_pnl_50k: 12.92, daily_pnl_100k: 25.84, var_mark_price: 0.1720, volume_24h: 156000000 },
+  { ticker: "AVAX", var_rate_annual: -15.11, cex_exchange: "gate.io", cex_rate_annual: -20.91, spread_annual: 5.80, direction: "short_var_long_cex", daily_pnl_10k: 1.59, daily_pnl_50k: 7.95, daily_pnl_100k: 15.89, var_mark_price: 22.40, volume_24h: 98000000 },
+  { ticker: "WIF", var_rate_annual: 10.95, cex_exchange: "bitget", cex_rate_annual: 5.48, spread_annual: 5.47, direction: "short_var_long_cex", daily_pnl_10k: 1.50, daily_pnl_50k: 7.49, daily_pnl_100k: 14.99, var_mark_price: 0.68, volume_24h: 38000000 },
 ];
 
 const MOCK_SUMMARY = {
-  total_markets_tracked: 142,
-  total_opportunities: 98,
-  best_spread_ticker: "BTC",
-  best_spread_annual: 91.99,
-  best_daily_10k: 25.20,
-  avg_spread_annual: 34.5,
+  total_markets_tracked: 476,
+  total_opportunities: 9,
+  best_spread_ticker: "LINK",
+  best_spread_annual: 24.33,
+  best_daily_10k: 6.66,
+  avg_spread_annual: 15.1,
   updated_at: new Date().toISOString(),
 };
 
@@ -291,7 +292,8 @@ const CEX_FEES = {
   gateio:       { maker: 0.0200, taker: 0.0500, name: "Gate.io",        fundingInterval: 8 },
   "gate.io":    { maker: 0.0200, taker: 0.0500, name: "Gate.io",        fundingInterval: 8 },
   bitget:       { maker: 0.0200, taker: 0.0600, name: "Bitget",         fundingInterval: 8 },
-  hyperliquid:  { maker: 0.0200, taker: 0.0500, name: "Hyperliquid",    fundingInterval: 8 },
+  /* HL: 0.015/0.045 base tier, hourly funding — keep consistent with /compare */
+  hyperliquid:  { maker: 0.0150, taker: 0.0450, name: "Hyperliquid",    fundingInterval: 1 },
   // Coinalyze-proxied
   binance:      { maker: 0.0200, taker: 0.0500, name: "Binance",        fundingInterval: 8 },
   bybit:        { maker: 0.0200, taker: 0.0550, name: "Bybit",          fundingInterval: 8 },
@@ -300,7 +302,7 @@ const CEX_FEES = {
   aster:        { maker: 0.0000, taker: 0.0350, name: "Aster",          fundingInterval: 8 },
   woox:         { maker: 0.0300, taker: 0.0300, name: "WOO X",          fundingInterval: 8 },
   dydx:         { maker: 0.0000, taker: 0.0500, name: "dYdX",           fundingInterval: 1 },
-  kraken:       { maker: 0.0200, taker: 0.0500, name: "Kraken Futures", fundingInterval: 4 },
+  kraken:       { maker: 0.0200, taker: 0.0500, name: "Kraken Futures", fundingInterval: 1 },
   phemex:       { maker: 0.0100, taker: 0.0600, name: "Phemex",         fundingInterval: 8 },
 };
 
@@ -330,9 +332,13 @@ function calcTradePlan(opp, notional) {
   const estimatedGasCost = 0.50; // ~$0.50 per tx on Arbitrum
   const totalGas = estimatedGasCost * 2; // open + close
 
-  // Daily funding income from spread
+  // Daily funding income from spread. The spread accrues on the hedged
+  // position size — and we split the notional across the two legs above,
+  // so income is earned on halfNotional, not the full wallet amount.
+  // (Using full notional here would overstate income 2x and halve the
+  // apparent break-even time.)
   const spreadAnnual = opp.spread_annual || 0;
-  const dailyFundingIncome = (notional * spreadAnnual / 100) / 365;
+  const dailyFundingIncome = (halfNotional * spreadAnnual / 100) / 365;
 
   // Net daily P&L (spread income minus any ongoing costs)
   const netDailyPnL = dailyFundingIncome;
@@ -798,7 +804,7 @@ function TradePlanPanel({ opportunity, onClose }) {
             <div style={{ fontFamily: FONTS.mono, fontSize: "0.58rem", color: `${THEME.text}55`, marginTop: 4 }}>Net of all trading fees and gas. Assumes current rates persist.</div>
           </div>
           <div style={cardStyle}>
-            <div style={labelStyle}>7D RATE HISTORY</div>
+            <div style={labelStyle}>7D RATE TREND (SIMULATED)</div>
             <MiniHistoryChart ticker={opp.ticker} />
           </div>
           <div style={cardStyle}>
@@ -1339,7 +1345,11 @@ function HistoricalChart({ opportunities }) {
       <div style={container}>
         <div style={sectionLabel}>SECTION 04</div>
         <div style={sectionTitle}>
-          RATE HISTORY &mdash; {selectedTicker}
+          RATE TREND &mdash; {selectedTicker}{" "}
+          <span style={{ fontSize: "0.65em", color: THEME.muted, fontWeight: 500 }}>
+            (SIMULATED — illustrative shape only, seeded from live spreads; not
+            historical data)
+          </span>
         </div>
 
         {/* Ticker selector */}

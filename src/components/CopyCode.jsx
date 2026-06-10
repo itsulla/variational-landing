@@ -1,18 +1,125 @@
 import { useState, useCallback } from "react";
+import { RATES_API_BASE } from "../config.js";
 
 /**
  * Click-to-copy referral code with toast feedback.
  * Accepts theme tokens to style itself contextually.
+ *
+ * Two pool-aware behaviours (state injected by main.jsx bootstrap):
+ *  - every copy fires a beacon to /api/ref/track so the server can
+ *    count copies per code (leading indicator for manual slot
+ *    reconciliation against the Variational dashboard);
+ *  - when the pool is exhausted, renders a waitlist capture instead
+ *    of a dead code, so paid traffic is never wasted.
  */
 export default function CopyCode({ code, theme, fonts, style = {} }) {
   const [copied, setCopied] = useState(false);
+  const [contact, setContact] = useState("");
+  const [waitlisted, setWaitlisted] = useState(false);
+
+  const exhausted = Boolean(window.__REF_POOL__?.pool_exhausted);
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(code).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
+    /* Fire-and-forget copy tracking; sendBeacon survives navigation. */
+    try {
+      const payload = new Blob([JSON.stringify({ code })], {
+        type: "application/json",
+      });
+      navigator.sendBeacon(`${RATES_API_BASE}/api/ref/track`, payload);
+    } catch (_e) { /* tracking is best-effort */ }
   }, [code]);
+
+  const submitWaitlist = useCallback(
+    (e) => {
+      e.preventDefault();
+      const value = contact.trim();
+      if (value.length < 5) return;
+      fetch(`${RATES_API_BASE}/api/ref/waitlist`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ contact: value }),
+      }).catch(() => {});
+      setWaitlisted(true);
+    },
+    [contact]
+  );
+
+  /* ── Waitlist mode: all referral slots taken ── */
+  if (exhausted) {
+    return (
+      <div style={{ display: "inline-block", maxWidth: 420, ...style }}>
+        <div
+          style={{
+            fontFamily: fonts?.body || "system-ui",
+            fontSize: "0.85rem",
+            color: theme.text || theme.accent,
+            lineHeight: 1.5,
+            marginBottom: 10,
+          }}
+        >
+          All current access codes are claimed. New slots unlock as referred
+          volume grows — leave an email or Telegram handle and we'll send you
+          the next code.
+        </div>
+        {waitlisted ? (
+          <div
+            style={{
+              fontFamily: fonts?.mono || "monospace",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              color: theme.accent,
+              padding: "12px 18px",
+              border: `1px solid ${theme.accent}44`,
+              borderRadius: 8,
+              background: `${theme.accent}10`,
+            }}
+          >
+            ✓ You're on the list — we'll reach out when a slot opens.
+          </div>
+        ) : (
+          <form onSubmit={submitWaitlist} style={{ display: "flex", gap: 8 }}>
+            <input
+              type="text"
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+              placeholder="email or @telegram"
+              style={{
+                flex: 1,
+                padding: "11px 14px",
+                borderRadius: 8,
+                border: `1px solid ${theme.accent}33`,
+                background: "transparent",
+                color: theme.text || "#fff",
+                fontFamily: fonts?.body || "system-ui",
+                fontSize: "0.85rem",
+                outline: "none",
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                padding: "11px 18px",
+                borderRadius: 8,
+                border: "none",
+                background: theme.accent,
+                color: theme.bg || "#000",
+                fontFamily: fonts?.body || "system-ui",
+                fontWeight: 700,
+                fontSize: "0.85rem",
+                cursor: "pointer",
+              }}
+            >
+              Notify me
+            </button>
+          </form>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div style={{ position: "relative", display: "inline-block", ...style }}>

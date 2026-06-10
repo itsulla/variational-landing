@@ -1,5 +1,7 @@
 import express from "express";
 import { loadEnvFile } from "node:process";
+import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 // Load API keys / secrets from .env (chmod 600). Soft-fail if absent so
 // the server still boots in environments without an env file — endpoints
@@ -9,9 +11,132 @@ try {
 } catch (_e) { /* no .env present, that's fine */ }
 
 const COINALYZE_API_KEY = process.env.COINALYZE_API_KEY || "";
+const REF_ADMIN_SECRET = process.env.REF_ADMIN_SECRET || "";
 
 const app = express();
+app.use(express.json({ limit: "16kb" }));
 const PORT = 8002;
+
+// ═══════════════════════════════════════════════════════════════
+//  REFERRAL CODE POOL — rotation, tracking, waitlist
+// ═══════════════════════════════════════════════════════════════
+// Variational referral codes have limited signup slots (1 slot per
+// $1M of personal/referred volume per the docs), so the site serves
+// codes from a pool with SEQUENTIAL FILL: the first active code with
+// signups < maxSlots is "current" until it's manually reconciled as
+// full, then the next takes over. `signups` is ground truth from the
+// Variational dashboard (updated via the admin endpoint); `copies`
+// is an automatic leading indicator only — clicks never decrement
+// slots, because most copies don't become signups.
+
+const REF_POOL_PATH = fileURLToPath(new URL("./ref-codes.json", import.meta.url));
+const WAITLIST_PATH = fileURLToPath(new URL("./waitlist.jsonl", import.meta.url));
+
+function loadRefPool() {
+  try {
+    return JSON.parse(readFileSync(REF_POOL_PATH, "utf8"));
+  } catch (e) {
+    console.error("[ref] pool load failed:", e.message);
+    return { codes: [] };
+  }
+}
+
+function saveRefPool(pool) {
+  writeFileSync(REF_POOL_PATH, JSON.stringify(pool, null, 2) + "\n");
+}
+
+function currentRefCode(pool) {
+  return pool.codes.find((c) => c.active && c.signups < c.maxSlots) || null;
+}
+
+function refStatus(pool) {
+  const remaining = pool.codes
+    .filter((c) => c.active)
+    .reduce((s, c) => s + Math.max(0, c.maxSlots - c.signups), 0);
+  return { slots_remaining: remaining, pool_exhausted: remaining === 0 };
+}
+
+// Current code for the frontend bootstrap. Never errors — an empty
+// pool returns exhausted:true and the UI falls back to waitlist mode.
+app.get("/api/ref/next", (_req, res) => {
+  const pool = loadRefPool();
+  const cur = currentRefCode(pool);
+  const status = refStatus(pool);
+  if (!cur) {
+    return res.json({ code: null, link: null, ...status, pool_exhausted: true });
+  }
+  res.json({
+    code: cur.code,
+    link: `https://omni.variational.io/?ref=${cur.code}`,
+    ...status,
+  });
+});
+
+// Pool state for the scarcity counter (no per-code internals exposed
+// beyond what the site shows anyway).
+app.get("/api/ref/status", (_req, res) => {
+  res.json(refStatus(loadRefPool()));
+});
+
+// Copy-click tracking — leading indicator for manual reconciliation.
+app.post("/api/ref/track", (req, res) => {
+  const code = String(req.body?.code || "").slice(0, 32);
+  if (code) {
+    const pool = loadRefPool();
+    const entry = pool.codes.find((c) => c.code === code);
+    if (entry) {
+      entry.copies = (entry.copies || 0) + 1;
+      saveRefPool(pool);
+    }
+  }
+  res.json({ ok: true });
+});
+
+// Waitlist capture for when the pool is exhausted. Append-only JSONL.
+app.post("/api/ref/waitlist", (req, res) => {
+  const contact = String(req.body?.contact || "").trim().slice(0, 200);
+  if (!contact || contact.length < 5) {
+    return res.status(400).json({ error: "contact required" });
+  }
+  appendFileSync(
+    WAITLIST_PATH,
+    JSON.stringify({ contact, ts: new Date().toISOString() }) + "\n"
+  );
+  res.json({ ok: true });
+});
+
+// Admin: reconcile signup counts / toggle / add codes.
+//   curl -X POST http://127.0.0.1:8002/api/ref/admin \
+//     -H "content-type: application/json" -H "x-admin-secret: $SECRET" \
+//     -d '{"action":"set","code":"OMNI...","signups":5}'
+// Actions: set {code, signups?, maxSlots?, active?} | add {code, maxSlots} | list
+app.post("/api/ref/admin", (req, res) => {
+  if (!REF_ADMIN_SECRET || req.headers["x-admin-secret"] !== REF_ADMIN_SECRET) {
+    return res.status(403).json({ error: "forbidden" });
+  }
+  const pool = loadRefPool();
+  const { action, code } = req.body || {};
+  if (action === "list") return res.json(pool);
+  if (action === "add" && code) {
+    pool.codes.push({
+      code: String(code),
+      maxSlots: Number(req.body.maxSlots) || 1,
+      signups: 0,
+      copies: 0,
+      active: true,
+    });
+  } else if (action === "set" && code) {
+    const entry = pool.codes.find((c) => c.code === code);
+    if (!entry) return res.status(404).json({ error: "unknown code" });
+    if (req.body.signups !== undefined) entry.signups = Number(req.body.signups);
+    if (req.body.maxSlots !== undefined) entry.maxSlots = Number(req.body.maxSlots);
+    if (req.body.active !== undefined) entry.active = Boolean(req.body.active);
+  } else {
+    return res.status(400).json({ error: "unknown action" });
+  }
+  saveRefPool(pool);
+  res.json(pool);
+});
 
 // ─── Cache layer ────────────────────────────────────────────────
 const cache = {};

@@ -162,6 +162,23 @@ export function CountdownBanner({ theme }) {
             })}{" "}
             UTC · Farm points across 475+ markets — crypto, stocks &amp; pre-IPO perps
           </span>
+          {typeof window !== "undefined" &&
+            Number.isFinite(window.__REF_POOL__?.slots_remaining) &&
+            window.__REF_POOL__.slots_remaining > 0 && (
+              <span
+                style={{
+                  marginTop: 2,
+                  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                  fontSize: "0.68rem",
+                  fontWeight: 600,
+                  color: accent,
+                }}
+              >
+                {window.__REF_POOL__.slots_remaining} beta access code
+                {window.__REF_POOL__.slots_remaining === 1 ? "" : "s"} remaining
+                — next batch unlocks at the next volume milestone
+              </span>
+            )}
         </div>
 
         <div style={counter} aria-live="polite">

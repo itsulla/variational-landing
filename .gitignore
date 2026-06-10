@@ -27,3 +27,5 @@ dist-ssr
 
 # Secrets — env file holds COINALYZE_API_KEY
 api/.env
+api/ref-codes.json
+api/waitlist.jsonl

@@ -305,9 +305,27 @@ function setJsonLd(id, data) {
   el.textContent = JSON.stringify(data);
 }
 
+/* Vanity ad-campaign aliases render the same page as /pre-ipo — give
+ * them identical meta so the lookup doesn't fall back to the homepage.
+ * Canonical still points at the alias path itself, which is fine for
+ * ads (each campaign URL self-canonicalizes). */
+PAGE_META["/spacex"] = PAGE_META["/pre-ipo"];
+PAGE_META["/spcx"] = PAGE_META["/pre-ipo"];
+
+let firstPageVisit = true;
+
 export default function PageMeta({ path }) {
   useEffect(() => {
     const meta = PAGE_META[path] || PAGE_META["/"];
+
+    /* Reddit Pixel: index.html fires PageVisit for the initial load;
+     * re-fire here on SPA route CHANGES only (skip first mount to
+     * avoid double-counting the landing view). */
+    if (firstPageVisit) {
+      firstPageVisit = false;
+    } else if (typeof window.rdt === "function") {
+      window.rdt("track", "PageVisit");
+    }
 
     /* Title */
     document.title = meta.title;

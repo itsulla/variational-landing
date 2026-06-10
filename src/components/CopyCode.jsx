@@ -31,6 +31,12 @@ export default function CopyCode({ code, theme, fonts, style = {} }) {
       });
       navigator.sendBeacon(`${RATES_API_BASE}/api/ref/track`, payload);
     } catch (_e) { /* tracking is best-effort */ }
+    /* Reddit Pixel conversion: a code copy is our primary on-site
+     * conversion (the actual signup happens on Variational's domain
+     * where we can't see it). Lets Reddit Ads optimize toward copiers. */
+    if (typeof window.rdt === "function") {
+      window.rdt("track", "Lead");
+    }
   }, [code]);
 
   const submitWaitlist = useCallback(
@@ -43,6 +49,9 @@ export default function CopyCode({ code, theme, fonts, style = {} }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ contact: value }),
       }).catch(() => {});
+      if (typeof window.rdt === "function") {
+        window.rdt("track", "Custom", { customEventName: "WaitlistJoin" });
+      }
       setWaitlisted(true);
     },
     [contact]

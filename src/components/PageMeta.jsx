@@ -11,24 +11,24 @@ const PAGE_META = {
   "/": {
     title: "Trade SpaceX & OpenAI Pre-IPO Perps, Stocks & Crypto | Variational",
     description:
-      "Trade SpaceX, OpenAI & Anthropic pre-IPO perps, stocks, ETFs, commodities and 475+ crypto markets with zero trading fees on Variational. Earn points toward the $VAR airdrop. Built on Arbitrum.",
+      "Trade SpaceX, OpenAI & Anthropic pre-IPO perps, stocks, ETFs, commodities and 495+ crypto markets with zero trading fees on Variational. Earn points toward the $VAR airdrop. Built on Arbitrum.",
     og: {
       title: "Trade Pre-IPO Perps, Stocks & Crypto with Zero Fees | Variational",
       description:
-        "Zero fees. SpaceX, OpenAI & Anthropic pre-IPO perps plus 475+ markets on Arbitrum.",
+        "Zero fees. SpaceX, OpenAI & Anthropic pre-IPO perps plus 495+ markets on Arbitrum.",
       image: `${SITE_URL}/og-image.svg`,
     },
     twitter: {
       title: "Trade Pre-IPO Perps, Stocks & Crypto with Zero Fees | Variational",
       description:
-        "475+ markets incl. pre-IPO equities. Zero fees. Total privacy. Built on Arbitrum.",
+        "495+ markets incl. pre-IPO equities. Zero fees. Total privacy. Built on Arbitrum.",
     },
     jsonLd: null, // homepage uses Organization schema injected separately
   },
   "/terminal": {
     title: "Trade in the Dark | Variational Terminal",
     description:
-      "Zero trading fees. Tight aggregated spreads. Total execution privacy. Trade 475+ perpetual markets on Variational's private RFQ engine.",
+      "Zero trading fees. Tight aggregated spreads. Total execution privacy. Trade 495+ perpetual markets on Variational's private RFQ engine.",
     og: {
       title: "Trade in the Dark | Variational Terminal",
       description:
@@ -62,7 +62,7 @@ const PAGE_META = {
   "/neon": {
     title: "Your Edge Stays Invisible | Variational",
     description:
-      "Private execution, tight aggregated spreads, zero trading fees. Trade 475+ perpetual markets where your strategy stays yours.",
+      "Private execution, tight aggregated spreads, zero trading fees. Trade 495+ perpetual markets where your strategy stays yours.",
     og: {
       title: "Your Edge Stays Invisible | Variational",
       description:

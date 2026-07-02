@@ -152,7 +152,7 @@ const STEPS = [
   {
     step: 3,
     title: "Trade & Accumulate Points",
-    desc: "Trade any of 475+ markets — crypto, stocks, ETFs, pre-IPO. Every dollar of volume earns points toward the $VAR airdrop.",
+    desc: "Trade any of 495+ markets — crypto, stocks, ETFs, pre-IPO. Every dollar of volume earns points toward the $VAR airdrop.",
   },
 ];
 
@@ -256,7 +256,7 @@ export default function OriginalTheme() {
           }}
         >
           Trade <span style={{ color: THEME.accent }}>SpaceX, OpenAI &amp;
-          Anthropic pre-IPO</span>, stocks, gold, oil and 475+ crypto perps.
+          Anthropic pre-IPO</span>, stocks, gold, oil and 495+ crypto perps.
           Zero fees.
         </h1>
 

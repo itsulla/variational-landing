@@ -19,6 +19,16 @@ export const DUNE_AIRDROP_SIM_URL =
  * UI shows ticker/name/type, since some mid-window dates are
  * approximate (between announcement sweeps). */
 export const RECENT_LISTINGS = [
+  { ticker: "QQQ", name: "Invesco QQQ Trust", type: "ETF", date: "2026-06-28" },
+  { ticker: "NVDA", name: "NVIDIA", type: "Stock", date: "2026-06-25" },
+  { ticker: "META", name: "Meta Platforms", type: "Stock", date: "2026-06-25" },
+  { ticker: "GOOGL", name: "Alphabet", type: "Stock", date: "2026-06-24" },
+  { ticker: "MSFT", name: "Microsoft", type: "Stock", date: "2026-06-24" },
+  { ticker: "HOOD", name: "Robinhood", type: "Stock", date: "2026-06-20" },
+  { ticker: "COIN", name: "Coinbase", type: "Stock", date: "2026-06-20" },
+  { ticker: "PLTR", name: "Palantir", type: "Stock", date: "2026-06-18" },
+  { ticker: "AMD", name: "AMD", type: "Stock", date: "2026-06-18" },
+  { ticker: "INTC", name: "Intel", type: "Stock", date: "2026-06-15" },
   { ticker: "QCOM", name: "Qualcomm", type: "Stock", date: "2026-06-09" },
   { ticker: "MU", name: "Micron", type: "Stock", date: "2026-06-09" },
   { ticker: "TSM", name: "Taiwan Semiconductor", type: "Stock", date: "2026-06-08" },
@@ -45,16 +55,16 @@ export const SERIES_A_ARTICLE_URL =
 export const MARKET_DATA = {
   variational: {
     name: "Variational",
-    cumulativeVolume: "$242B+",
-    openInterest: "$835M+",
-    markets: "475+",
+    cumulativeVolume: "$260B+",
+    openInterest: "$1B+",
+    markets: "495+",
     raised: "$50M Series A (May 2026)",
     communityAllocation: "Up to ~50%",
     fdv: "Pre-TGE",
     tradingFees: "0.00% (permanent)",
     executionPrivacy: "Private RFQ (orders not public)",
     blockTradeSlippage: "Minimal (aggregated CEX/DEX/TradFi depth)",
-    tradableMarkets: "475+ markets incl. pre-IPO (SpaceX, OpenAI, Anthropic), stocks, ETFs, commodities",
+    tradableMarkets: "495+ markets incl. pre-IPO (SpaceX, OpenAI, Anthropic), stocks, ETFs, commodities",
     executionEdge: "OLP captures the spread, not fees — passes tighter pricing to traders",
     architecture: "Private RFQ (Omni LP)",
     status: "Mainnet (private beta)",

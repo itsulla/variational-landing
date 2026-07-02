@@ -244,7 +244,7 @@ function PriceComparison() {
 }
 
 export default function PreIpoTheme() {
-  const [marketCount, setMarketCount] = useState(475);
+  const [marketCount, setMarketCount] = useState(495);
 
   useEffect(() => {
     injectFonts();

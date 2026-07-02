@@ -160,7 +160,7 @@ const STEPS = [
   {
     step: 3,
     title: "Trade & Accumulate Points",
-    desc: "Trade any of 475+ markets — crypto, stocks, ETFs, pre-IPO. Earn points toward the $VAR airdrop.",
+    desc: "Trade any of 495+ markets — crypto, stocks, ETFs, pre-IPO. Earn points toward the $VAR airdrop.",
   },
 ];
 

@@ -160,7 +160,7 @@ export function CountdownBanner({ theme }) {
               day: "numeric",
               year: "numeric",
             })}{" "}
-            UTC · Farm points across 475+ markets — crypto, stocks &amp; pre-IPO perps
+            UTC · Farm points across 495+ markets — crypto, stocks &amp; pre-IPO perps
           </span>
           {typeof window !== "undefined" &&
             Number.isFinite(window.__REF_POOL__?.slots_remaining) &&

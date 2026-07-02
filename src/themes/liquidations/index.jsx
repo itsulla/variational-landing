@@ -167,7 +167,9 @@ function formatOI(oi) {
 
 function formatFundingRate(rate) {
   if (rate == null || isNaN(rate)) return "---";
-  const annualized = rate * 365 * 100;
+  // Hyperliquid settles funding EVERY HOUR and the API's funding field
+  // is the hourly rate, so annualization is x24x365 — not x365.
+  const annualized = rate * 24 * 365 * 100;
   const sign = annualized >= 0 ? "+" : "";
   return `${sign}${annualized.toFixed(2)}%`;
 }

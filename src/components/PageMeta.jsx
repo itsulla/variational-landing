@@ -268,6 +268,129 @@ const PAGE_META = {
       inLanguage: "en",
     },
   },
+  "/insights/openai-pre-ipo-perps": {
+    title: "How to Get OpenAI Pre-IPO Exposure in 2026 | Variational",
+    description:
+      "Retail can't buy OpenAI stock and secondary markets are gated to accredited investors. How synthetic pre-IPO perpetuals let anyone go long or short OpenAI 24/7 — zero fees, plus $VAR airdrop points.",
+    og: {
+      title: "How to Get OpenAI Pre-IPO Exposure — Long or Short, 24/7",
+      description:
+        "No accreditation, no minimums. Trade OpenAI's private-market valuation with zero-fee perps and farm the $VAR airdrop.",
+      image: `${SITE_URL}/og-insights.svg`,
+    },
+    twitter: {
+      title: "How to Get OpenAI Pre-IPO Exposure in 2026",
+      description:
+        "Synthetic pre-IPO perps: long or short OpenAI, 24/7, zero fees, $VAR airdrop points on every trade.",
+    },
+    jsonLd: {
+      "@type": "Article",
+      headline: "How to Get OpenAI Pre-IPO Exposure in 2026",
+      description:
+        "A guide to gaining OpenAI pre-IPO exposure through synthetic oracle-priced perpetual futures — no accreditation required, long or short, with zero trading fees.",
+      url: `${SITE_URL}/insights/openai-pre-ipo-perps`,
+      image: `${SITE_URL}/og-insights.svg`,
+      datePublished: "2026-07-06",
+      dateModified: "2026-07-06",
+      author: { "@type": "Organization", name: "tryvariational", url: SITE_URL },
+      publisher: {
+        "@type": "Organization",
+        name: "tryvariational",
+        url: SITE_URL,
+        logo: { "@type": "ImageObject", url: `${SITE_URL}/og-image.svg` },
+      },
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": `${SITE_URL}/insights/openai-pre-ipo-perps`,
+      },
+      keywords:
+        "OpenAI pre-IPO, OpenAI stock, invest in OpenAI, pre-IPO perpetuals, Variational, synthetic exposure, $VAR airdrop",
+      articleSection: "Pre-IPO Guide",
+      inLanguage: "en",
+    },
+  },
+  "/insights/anthropic-pre-ipo-perps": {
+    title: "How to Get Anthropic Pre-IPO Exposure in 2026 | Variational",
+    description:
+      "You can't buy Anthropic stock and secondary markets require accreditation. How pre-IPO perpetuals let anyone go long or short Anthropic 24/7 — zero fees, plus $VAR airdrop points.",
+    og: {
+      title: "How to Get Anthropic Pre-IPO Exposure — Long or Short, 24/7",
+      description:
+        "No accreditation, no minimums. Trade Anthropic's private-market valuation with zero-fee perps and farm the $VAR airdrop.",
+      image: `${SITE_URL}/og-insights.svg`,
+    },
+    twitter: {
+      title: "How to Get Anthropic Pre-IPO Exposure in 2026",
+      description:
+        "Synthetic pre-IPO perps: long or short Anthropic, 24/7, zero fees, $VAR airdrop points on every trade.",
+    },
+    jsonLd: {
+      "@type": "Article",
+      headline: "How to Get Anthropic Pre-IPO Exposure in 2026",
+      description:
+        "A guide to gaining Anthropic pre-IPO exposure through synthetic oracle-priced perpetual futures — no accreditation required, long or short, with zero trading fees.",
+      url: `${SITE_URL}/insights/anthropic-pre-ipo-perps`,
+      image: `${SITE_URL}/og-insights.svg`,
+      datePublished: "2026-07-06",
+      dateModified: "2026-07-06",
+      author: { "@type": "Organization", name: "tryvariational", url: SITE_URL },
+      publisher: {
+        "@type": "Organization",
+        name: "tryvariational",
+        url: SITE_URL,
+        logo: { "@type": "ImageObject", url: `${SITE_URL}/og-image.svg` },
+      },
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": `${SITE_URL}/insights/anthropic-pre-ipo-perps`,
+      },
+      keywords:
+        "Anthropic pre-IPO, Anthropic stock, invest in Anthropic, pre-IPO perpetuals, Variational, synthetic exposure, $VAR airdrop",
+      articleSection: "Pre-IPO Guide",
+      inLanguage: "en",
+    },
+  },
+  "/insights/funding-rate-farming-guide": {
+    title: "Funding-Rate Farming: A Delta-Neutral Guide | Variational",
+    description:
+      "A step-by-step tutorial on collecting funding-rate spreads with limited directional risk — and why Variational's 0% fees plus $VAR airdrop points make it a double yield.",
+    og: {
+      title: "Funding-Rate Farming: A Delta-Neutral Guide",
+      description:
+        "Collect funding spreads with net-zero delta. Why 0% fees and $VAR airdrop points make Variational a strong leg.",
+      image: `${SITE_URL}/og-insights.svg`,
+    },
+    twitter: {
+      title: "Funding-Rate Farming: A Delta-Neutral Guide",
+      description:
+        "Step-by-step: collect funding-rate spreads with limited directional risk. Zero fees + $VAR airdrop = double yield.",
+    },
+    jsonLd: {
+      "@type": "Article",
+      headline: "Funding-Rate Farming on Variational: A Delta-Neutral Guide",
+      description:
+        "A step-by-step tutorial on delta-neutral funding-rate farming, why zero trading fees maximize the spread you keep, and how $VAR airdrop points stack on top.",
+      url: `${SITE_URL}/insights/funding-rate-farming-guide`,
+      image: `${SITE_URL}/og-insights.svg`,
+      datePublished: "2026-07-06",
+      dateModified: "2026-07-06",
+      author: { "@type": "Organization", name: "tryvariational", url: SITE_URL },
+      publisher: {
+        "@type": "Organization",
+        name: "tryvariational",
+        url: SITE_URL,
+        logo: { "@type": "ImageObject", url: `${SITE_URL}/og-image.svg` },
+      },
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": `${SITE_URL}/insights/funding-rate-farming-guide`,
+      },
+      keywords:
+        "funding rate farming, funding rate arbitrage, delta neutral, basis trade, Variational, zero fees, $VAR airdrop",
+      articleSection: "Tutorial",
+      inLanguage: "en",
+    },
+  },
 };
 
 /* Organisation schema — injected on every page */

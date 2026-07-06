@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import ComparisonTable from "../../components/ComparisonTable.jsx";
 import AirdropCalculator from "../../components/AirdropCalculator.jsx";
 import Footer from "../../components/Footer.jsx";
@@ -165,6 +166,71 @@ function formatVolume(n) {
   return { value: Math.round(n), suffix: "" };
 }
 
+/* ---------- Sticky conversion bar ----------
+ * Slides up once the user scrolls past the hero so the primary
+ * action (claim access code → open Variational) is always reachable
+ * on a long page. Bottom-center, offset above the theme switcher. */
+function StickyCtaBar() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 700);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <div
+      aria-hidden={!show}
+      style={{
+        position: "fixed",
+        left: "50%",
+        bottom: 20,
+        transform: `translateX(-50%) translateY(${show ? "0" : "140%"})`,
+        opacity: show ? 1 : 0,
+        transition: "transform 0.35s ease, opacity 0.35s ease",
+        zIndex: 90,
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        padding: "10px 14px 10px 20px",
+        borderRadius: 999,
+        background: "rgba(12,17,30,0.92)",
+        border: `1px solid ${THEME.accent}44`,
+        boxShadow: `0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px ${THEME.accent}11`,
+        backdropFilter: "blur(8px)",
+        maxWidth: "calc(100vw - 32px)",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: LABEL_FONT,
+          fontSize: "0.8rem",
+          color: THEME.text,
+          whiteSpace: "nowrap",
+        }}
+      >
+        Access code{" "}
+        <span style={{ color: THEME.accent, fontWeight: 700 }}>{REFERRAL_CODE}</span>
+      </span>
+      <a
+        href={REFERRAL_LINK}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          ...primaryBtn,
+          padding: "9px 20px",
+          fontSize: "0.9rem",
+          whiteSpace: "nowrap",
+        }}
+      >
+        Start Trading →
+      </a>
+    </div>
+  );
+}
+
 /* ---------- Component ---------- */
 
 export default function OriginalTheme() {
@@ -325,7 +391,7 @@ export default function OriginalTheme() {
           {[
             { prefix: "$", value: cumVolFmt.value, suffix: cumVolFmt.suffix, label: "Cumulative Volume" },
             { prefix: "$", value: vol24hFmt.value, suffix: vol24hFmt.suffix, label: "24h Volume" },
-            { prefix: "", value: 450, suffix: "+", label: "Markets" },
+            { prefix: "", value: 495, suffix: "+", label: "Markets" },
             { prefix: "$", value: 50, suffix: "M", label: "Series A (May 2026)" },
           ].map((s) => (
             <div key={s.label} style={{ textAlign: "center" }}>
@@ -359,6 +425,96 @@ export default function OriginalTheme() {
 
         {/* Social proof */}
         <SocialProof theme={THEME} fonts={FONTS} />
+      </section>
+
+      {/* ===== CREDIBILITY (moved high — proof before the ask) ===== */}
+      <div style={{ marginTop: 8, marginBottom: 8 }}>
+        <TrustStrip theme={THEME} fonts={FONTS} />
+      </div>
+
+      {/* ===== PRE-IPO HOOK (the differentiator, high on the page) ===== */}
+      <section style={section}>
+        <Link
+          to="/pre-ipo"
+          style={{
+            display: "block",
+            textDecoration: "none",
+            borderRadius: 16,
+            padding: "28px 28px",
+            background: `linear-gradient(135deg, ${THEME.accent}14, ${THEME.bg})`,
+            border: `1px solid ${THEME.accent}33`,
+            transition: "border-color 0.2s, transform 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = `${THEME.accent}77`;
+            e.currentTarget.style.transform = "translateY(-2px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = `${THEME.accent}33`;
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 16,
+            }}
+          >
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontFamily: LABEL_FONT,
+                  fontSize: "0.72rem",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: THEME.accent,
+                  marginBottom: 8,
+                }}
+              >
+                Pre-IPO perps · live now
+              </div>
+              <div
+                style={{
+                  fontFamily: FONTS.heading,
+                  fontSize: "clamp(1.3rem, 3vw, 1.9rem)",
+                  fontWeight: 700,
+                  color: THEME.text,
+                  lineHeight: 1.2,
+                }}
+              >
+                Trade <span style={{ color: THEME.accent }}>OpenAI</span> &amp;{" "}
+                <span style={{ color: THEME.accent }}>Anthropic</span> before they IPO
+              </div>
+              <p
+                style={{
+                  fontSize: "0.92rem",
+                  color: `${THEME.text}99`,
+                  margin: "10px 0 0",
+                  maxWidth: 560,
+                  lineHeight: 1.55,
+                }}
+              >
+                Long or short the two biggest private AI companies — 24/7, no
+                accreditation, zero trading fees. Every dollar of volume also
+                farms the $VAR airdrop.
+              </p>
+            </div>
+            <span
+              style={{
+                ...primaryBtn,
+                padding: "12px 26px",
+                fontSize: "0.95rem",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+              }}
+            >
+              View Pre-IPO Markets →
+            </span>
+          </div>
+        </Link>
       </section>
 
       {/* ===== RECENTLY LISTED (TradFi expansion) ===== */}
@@ -514,16 +670,6 @@ export default function OriginalTheme() {
         <ComparisonTable theme={THEME} fonts={FONTS} compact={false} />
       </section>
 
-      {/* ===== AIRDROP CALCULATOR ===== */}
-      <section id="calculator" style={section}>
-        <div style={sectionLabel}>// Airdrop calculator</div>
-        <h2 style={{ ...sectionHeading, marginBottom: 32 }}>
-          Estimate your <span style={{ color: THEME.accent }}>$VAR</span>{" "}
-          allocation
-        </h2>
-        <AirdropCalculator theme={THEME} fonts={FONTS} />
-      </section>
-
       {/* ===== GET STARTED ===== */}
       <section style={section}>
         <div style={sectionLabel}>// Get started</div>
@@ -607,6 +753,16 @@ export default function OriginalTheme() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* ===== AIRDROP CALCULATOR (grouped with rewards — the "earn" block) ===== */}
+      <section id="calculator" style={section}>
+        <div style={sectionLabel}>// Airdrop calculator</div>
+        <h2 style={{ ...sectionHeading, marginBottom: 32 }}>
+          Estimate your <span style={{ color: THEME.accent }}>$VAR</span>{" "}
+          allocation
+        </h2>
+        <AirdropCalculator theme={THEME} fonts={FONTS} />
       </section>
 
       {/* ===== REWARD TIERS ===== */}
@@ -741,6 +897,109 @@ export default function OriginalTheme() {
         </p>
       </section>
 
+      {/* ===== INSIGHTS / FROM THE BLOG ===== */}
+      <section style={section}>
+        <div style={sectionLabel}>// From the blog</div>
+        <h2 style={{ ...sectionHeading, marginBottom: 32 }}>
+          Guides &amp; research
+        </h2>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: 16,
+          }}
+        >
+          {[
+            {
+              slug: "openai-pre-ipo-perps",
+              tag: "Pre-IPO",
+              title: "How to Get OpenAI Pre-IPO Exposure",
+            },
+            {
+              slug: "anthropic-pre-ipo-perps",
+              tag: "Pre-IPO",
+              title: "How to Get Anthropic Pre-IPO Exposure",
+            },
+            {
+              slug: "funding-rate-farming-guide",
+              tag: "Tutorial",
+              title: "Funding-Rate Farming: A Delta-Neutral Guide",
+            },
+          ].map((a) => (
+            <Link
+              key={a.slug}
+              to={`/insights/${a.slug}`}
+              style={{
+                display: "block",
+                textDecoration: "none",
+                padding: "20px 20px",
+                borderRadius: 12,
+                background: `${THEME.accent}08`,
+                border: `1px solid ${THEME.muted}22`,
+                transition: "border-color 0.2s, transform 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = `${THEME.accent}66`;
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = `${THEME.muted}22`;
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: LABEL_FONT,
+                  fontSize: "0.66rem",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: THEME.accent,
+                }}
+              >
+                {a.tag}
+              </span>
+              <div
+                style={{
+                  fontFamily: FONTS.heading,
+                  fontSize: "1.02rem",
+                  fontWeight: 600,
+                  color: THEME.text,
+                  marginTop: 10,
+                  lineHeight: 1.35,
+                }}
+              >
+                {a.title}
+              </div>
+              <div
+                style={{
+                  fontSize: "0.82rem",
+                  color: THEME.accent,
+                  marginTop: 14,
+                  fontFamily: FONTS.body,
+                }}
+              >
+                Read →
+              </div>
+            </Link>
+          ))}
+        </div>
+        <div style={{ textAlign: "center", marginTop: 24 }}>
+          <Link
+            to="/insights"
+            style={{
+              fontFamily: LABEL_FONT,
+              fontSize: "0.85rem",
+              color: THEME.muted,
+              textDecoration: "none",
+              borderBottom: `1px dotted ${THEME.muted}`,
+            }}
+          >
+            All insights →
+          </Link>
+        </div>
+      </section>
+
       {/* ===== URGENCY + FOOTER CTA ===== */}
       <section
         style={{
@@ -834,13 +1093,11 @@ export default function OriginalTheme() {
 
       </section>
 
-      <div style={{ marginTop: 48 }}>
-        <TrustStrip theme={THEME} fonts={FONTS} />
-      </div>
-
       <div style={{ marginTop: 24 }}>
         <Footer theme={THEME} />
       </div>
+
+      <StickyCtaBar />
     </div>
   );
 }

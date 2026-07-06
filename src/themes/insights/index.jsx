@@ -23,6 +23,36 @@ const FONTS = {
 /* Source of truth for the article index. New articles append here. */
 const ARTICLES = [
   {
+    slug: "openai-pre-ipo-perps",
+    title: "How to Get OpenAI Pre-IPO Exposure in 2026",
+    subtitle:
+      "Retail has almost no legitimate path into OpenAI before it goes public. Here's how synthetic pre-IPO perpetuals let anyone go long or short 24/7 — with zero fees and $VAR airdrop points on every trade.",
+    date: "July 6, 2026",
+    dateISO: "2026-07-06",
+    readTime: "7 min read",
+    tag: "Pre-IPO Guide",
+  },
+  {
+    slug: "anthropic-pre-ipo-perps",
+    title: "How to Get Anthropic Pre-IPO Exposure in 2026",
+    subtitle:
+      "You can't buy Anthropic stock, and secondary markets are gated to accredited investors. Pre-IPO perps open the trade to everyone — long or short, no accreditation, while farming the $VAR airdrop.",
+    date: "July 6, 2026",
+    dateISO: "2026-07-06",
+    readTime: "7 min read",
+    tag: "Pre-IPO Guide",
+  },
+  {
+    slug: "funding-rate-farming-guide",
+    title: "Funding-Rate Farming: A Delta-Neutral Guide",
+    subtitle:
+      "A step-by-step tutorial on collecting funding-rate spreads with limited directional risk — and why Variational's 0% fees plus $VAR airdrop points make it a double yield.",
+    date: "July 6, 2026",
+    dateISO: "2026-07-06",
+    readTime: "9 min read",
+    tag: "Tutorial",
+  },
+  {
     slug: "why-perp-dexes-coexist",
     title: "The Perp DEX Market Isn't Winner-Take-All",
     subtitle:

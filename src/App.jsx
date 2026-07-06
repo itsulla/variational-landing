@@ -16,6 +16,15 @@ const InsightsIndex = lazy(() => import("./themes/insights/index.jsx"));
 const WhyPerpDexesCoexist = lazy(() =>
   import("./themes/insights/why-perp-dexes-coexist.jsx")
 );
+const OpenAIPreIpoPerps = lazy(() =>
+  import("./themes/insights/openai-pre-ipo-perps.jsx")
+);
+const AnthropicPreIpoPerps = lazy(() =>
+  import("./themes/insights/anthropic-pre-ipo-perps.jsx")
+);
+const FundingRateFarmingGuide = lazy(() =>
+  import("./themes/insights/funding-rate-farming-guide.jsx")
+);
 const PreIpo = lazy(() => import("./themes/preipo/index.jsx"));
 
 /* Nav header color presets per route */
@@ -84,6 +93,18 @@ export default function App() {
           <Route
             path="/insights/why-perp-dexes-coexist"
             element={<WhyPerpDexesCoexist />}
+          />
+          <Route
+            path="/insights/openai-pre-ipo-perps"
+            element={<OpenAIPreIpoPerps />}
+          />
+          <Route
+            path="/insights/anthropic-pre-ipo-perps"
+            element={<AnthropicPreIpoPerps />}
+          />
+          <Route
+            path="/insights/funding-rate-farming-guide"
+            element={<FundingRateFarmingGuide />}
           />
           {/* /spcx and /spacex are vanity aliases for ad campaigns */}
           <Route path="/pre-ipo" element={<PreIpo />} />

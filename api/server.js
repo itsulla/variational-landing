@@ -12,6 +12,10 @@ try {
 
 const COINALYZE_API_KEY = process.env.COINALYZE_API_KEY || "";
 const REF_ADMIN_SECRET = process.env.REF_ADMIN_SECRET || "";
+// Lithuania VPS funding proxy — reaches Binance/Bybit directly (not
+// geo-blocked in the EU), replacing the slow Coinalyze path for those two.
+const LT_PROXY_URL = process.env.LT_PROXY_URL || "";
+const LT_PROXY_SECRET = process.env.LT_PROXY_SECRET || "";
 
 const app = express();
 app.use(express.json({ limit: "16kb" }));
@@ -138,21 +142,52 @@ app.post("/api/ref/admin", (req, res) => {
   res.json(pool);
 });
 
-// ─── Cache layer ────────────────────────────────────────────────
+// ─── Cache layer (stale-while-revalidate) ───────────────────────
+// Fresh (< ttl):    serve from cache instantly.
+// Stale (> ttl):    serve the stale copy instantly AND kick off a
+//                   background refresh — so no user ever waits on a
+//                   slow upstream fetch (some funding sources take
+//                   10-20s). Only the very first call (empty cache)
+//                   blocks on the fetch.
+// `inflight` guards against a thundering herd of background refreshes.
 const cache = {};
+const inflight = {};
 function cached(key, ttlMs, fetcher) {
+  const refresh = async () => {
+    if (inflight[key]) return inflight[key];
+    inflight[key] = (async () => {
+      try {
+        const data = await fetcher();
+        cache[key] = { data, ts: Date.now() };
+        return data;
+      } finally {
+        inflight[key] = null;
+      }
+    })();
+    return inflight[key];
+  };
+
   return async (_req, res) => {
     const now = Date.now();
-    if (cache[key] && now - cache[key].ts < ttlMs) {
-      return res.json(cache[key].data);
+    const entry = cache[key];
+
+    // Fresh — serve immediately.
+    if (entry && now - entry.ts < ttlMs) {
+      return res.json(entry.data);
     }
+
+    // Stale — serve stale now, revalidate in the background.
+    if (entry) {
+      refresh().catch((err) => console.error(`[${key}] bg refresh error:`, err.message));
+      return res.json(entry.data);
+    }
+
+    // Cold — nothing cached yet, must block on the first fetch.
     try {
-      const data = await fetcher();
-      cache[key] = { data, ts: now };
+      const data = await refresh();
       res.json(data);
     } catch (err) {
       console.error(`[${key}] fetch error:`, err.message);
-      if (cache[key]) return res.json(cache[key].data);
       res.status(502).json({ error: err.message });
     }
   };
@@ -358,6 +393,37 @@ async function fetchCoinalyzeFundingRates(exchanges, tickers) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+//  LITHUANIA PROXY — direct Binance + Bybit funding rates
+// ═══════════════════════════════════════════════════════════════
+// The Lithuania (EU) VPS can reach fapi.binance.com and api.bybit.com
+// directly. Its funding-proxy service returns the exact per-exchange
+// shape the rest of this file expects — { rate8h, periodsPerDay,
+// markPrice } keyed by ticker — from bulk native endpoints in <1s,
+// versus Coinalyze's ~16-24s (8s-per-chunk stagger). Coinalyze remains
+// the fallback for these two if the proxy is unreachable, and still
+// serves the other seven reference venues.
+async function fetchLithuaniaFundingRates(tickers) {
+  if (!LT_PROXY_URL || !LT_PROXY_SECRET) return null;
+  try {
+    const data = await fetchJSON(
+      `${LT_PROXY_URL}/funding?tickers=${tickers.join(",")}`,
+      { headers: { authorization: `Bearer ${LT_PROXY_SECRET}` } }
+    );
+    if (data?.errors?.length) {
+      console.error("[LT proxy] partial errors:", data.errors.join("; "));
+    }
+    // Only treat as usable if at least one venue returned data.
+    const binN = Object.keys(data?.binance || {}).length;
+    const bybN = Object.keys(data?.bybit || {}).length;
+    if (binN === 0 && bybN === 0) return null;
+    return { binance: data.binance || {}, bybit: data.bybit || {} };
+  } catch (e) {
+    console.error("[LT proxy] fetch failed, falling back to Coinalyze:", e.message);
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 //  EXCHANGE RATE SOURCES (CEX + DEX)
 // ═══════════════════════════════════════════════════════════════
 
@@ -434,31 +500,51 @@ async function fetchAllExchangeRates() {
     console.error("Hyperliquid fetch error:", e.message);
   }
 
-  // ── Coinalyze-proxied exchanges ──
-  // Two reasons we route through Coinalyze instead of native APIs:
-  //   1. fapi.binance.com (451) and api.bybit.com (403) are geo-blocked
-  //      from our US-region VPS, full stop.
-  //   2. Adding more reference venues directly would mean another seven
-  //      bespoke integrations; Coinalyze covers them all under one API
-  //      with consistent rate/timing semantics.
-  // Symbol mapping + percent→decimal conversion + funding-cycle
-  // metadata all live in fetchCoinalyzeFundingRates() above.
-  // OKX, Gate.io, Bitget aren't included — direct API calls below work
-  // from our VPS and give fresher data than the aggregator.
+  // ── Binance + Bybit (Lithuania proxy) ∥ 7 venues (Coinalyze) ──
+  // The EU VPS reaches fapi.binance.com / api.bybit.com directly and
+  // returns both in <1s. Coinalyze aggregates the other seven reference
+  // venues under one API. Run both fetches in parallel so the fast proxy
+  // adds no latency to the (slower, chunk-staggered) Coinalyze path.
   const COINALYZE_EXCHANGES = [
-    "binance", "bybit",                // previously blocked, now restored
     "bitmex", "htx",                   // major CEX, USDT perps
     "aster", "woox",                   // newer / quirkier USDT perps
     "dydx", "kraken", "phemex",        // USD perps (different funding cycle)
   ];
-  const coinalyzeRates = await fetchCoinalyzeFundingRates(
-    COINALYZE_EXCHANGES,
-    TICKERS
-  );
+  const [ltRates, coinalyzeRates] = await Promise.all([
+    fetchLithuaniaFundingRates(TICKERS),
+    fetchCoinalyzeFundingRates(COINALYZE_EXCHANGES, TICKERS),
+  ]);
+
+  const ltCovered = new Set();
+  if (ltRates) {
+    for (const exchange of ["binance", "bybit"]) {
+      for (const [ticker, row] of Object.entries(ltRates[exchange] || {})) {
+        if (!results[ticker]) results[ticker] = {};
+        results[ticker][exchange] = row;
+      }
+      if (Object.keys(ltRates[exchange] || {}).length > 0) ltCovered.add(exchange);
+    }
+  }
+
   for (const exchange of COINALYZE_EXCHANGES) {
     for (const [ticker, row] of Object.entries(coinalyzeRates[exchange] || {})) {
       if (!results[ticker]) results[ticker] = {};
       results[ticker][exchange] = row;
+    }
+  }
+
+  // Fallback: if the Lithuania proxy was down, Binance/Bybit would be
+  // missing entirely — pull them from Coinalyze instead so the two most
+  // important reference venues never silently vanish from the table.
+  const missing = ["binance", "bybit"].filter((e) => !ltCovered.has(e));
+  if (missing.length) {
+    console.error(`[LT proxy] uncovered ${missing.join(",")} — using Coinalyze fallback`);
+    const fb = await fetchCoinalyzeFundingRates(missing, TICKERS);
+    for (const exchange of missing) {
+      for (const [ticker, row] of Object.entries(fb[exchange] || {})) {
+        if (!results[ticker]) results[ticker] = {};
+        results[ticker][exchange] = row;
+      }
     }
   }
 
@@ -480,27 +566,27 @@ async function fetchAllExchangeRates() {
     console.error("Bitget fetch error:", e.message);
   }
 
-  // ── OKX (CEX) — per ticker ──
-  for (const ticker of TICKERS.slice(0, 8)) {
+  // ── OKX (CEX) — per ticker, fetched in parallel ──
+  await Promise.all(TICKERS.slice(0, 8).map(async (ticker) => {
     try {
       const instId = ticker === "MATIC" ? "POL-USDT-SWAP" : `${ticker}-USDT-SWAP`;
       const data = await fetchJSON(`https://www.okx.com/api/v5/public/funding-rate?instId=${instId}`);
       const item = data?.data?.[0];
-      if (!item) continue;
+      if (!item) return;
       if (!results[ticker]) results[ticker] = {};
       results[ticker].okx = {
         rate8h: parseFloat(item.fundingRate) || 0,
         periodsPerDay: 3,
       };
     } catch (_e) { /* skip */ }
-  }
+  }));
 
-  // ── Gate.io (CEX) — per ticker ──
-  for (const ticker of TICKERS.slice(0, 6)) {
+  // ── Gate.io (CEX) — per ticker, fetched in parallel ──
+  await Promise.all(TICKERS.slice(0, 6).map(async (ticker) => {
     try {
       const contract = ticker === "MATIC" ? "POL_USDT" : `${ticker}_USDT`;
       const data = await fetchJSON(`https://api.gateio.ws/api/v4/futures/usdt/contracts/${contract}`);
-      if (!data?.funding_rate) continue;
+      if (!data?.funding_rate) return;
       if (!results[ticker]) results[ticker] = {};
       results[ticker]["gate.io"] = {
         rate8h: parseFloat(data.funding_rate) || 0,
@@ -508,7 +594,7 @@ async function fetchAllExchangeRates() {
         markPrice: parseFloat(data.mark_price) || 0,
       };
     } catch (_e) { /* skip */ }
-  }
+  }));
 
   return results;
 }
@@ -1146,7 +1232,8 @@ app.listen(PORT, "127.0.0.1", () => {
     "Data sources:",
     "Variational, edgeX, Hyperliquid (direct);",
     "Bitget, OKX, Gate.io (direct);",
-    "Binance, Bybit, BitMEX, HTX, Aster, WOO X, dYdX, Kraken, Phemex (Coinalyze)"
+    "Binance, Bybit (Lithuania proxy, Coinalyze fallback);",
+    "BitMEX, HTX, Aster, WOO X, dYdX, Kraken, Phemex (Coinalyze)"
   );
   setTimeout(async () => {
     try {

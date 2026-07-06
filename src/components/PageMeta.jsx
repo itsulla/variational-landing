@@ -391,6 +391,236 @@ const PAGE_META = {
       inLanguage: "en",
     },
   },
+  "/insights/variational-review": {
+    title: "Variational Review 2026: Fees, Airdrop & Pre-IPO Markets | Variational Omni",
+    description:
+      "An honest review of Variational Omni — 0% maker/taker fees, the RFQ/OLP model, 495+ markets, the $VAR airdrop, OpenAI & Anthropic pre-IPO perps, and the real caveats. Referral code included.",
+    og: {
+      title: "Variational Review 2026 — 0% Fees, $VAR Airdrop & Pre-IPO Perps",
+      description:
+        "A user-perspective review of Variational Omni: how the zero-fee model works, what's good, the honest cons, and how to get started.",
+      image: `${SITE_URL}/og-insights.svg`,
+    },
+    twitter: {
+      title: "Variational Review 2026: Fees, Airdrop & Pre-IPO Markets",
+      description:
+        "0% fees, 495+ markets, OpenAI/Anthropic pre-IPO perps, $VAR airdrop — an honest review with the real caveats.",
+    },
+    jsonLd: {
+      "@graph": [
+        {
+          "@type": "Article",
+          headline: "Variational Review 2026: Fees, Airdrop & Pre-IPO Markets",
+          description:
+            "An honest, user-perspective review of Variational Omni — the zero-fee RFQ model, market breadth, the $VAR airdrop, pre-IPO perps, and the real caveats.",
+          url: `${SITE_URL}/insights/variational-review`,
+          image: `${SITE_URL}/og-insights.svg`,
+          datePublished: "2026-07-06",
+          dateModified: "2026-07-06",
+          author: { "@type": "Organization", name: "tryvariational", url: SITE_URL },
+          publisher: {
+            "@type": "Organization",
+            name: "tryvariational",
+            url: SITE_URL,
+            logo: { "@type": "ImageObject", url: `${SITE_URL}/og-image.svg` },
+          },
+          mainEntityOfPage: {
+            "@type": "WebPage",
+            "@id": `${SITE_URL}/insights/variational-review`,
+          },
+          keywords:
+            "Variational review, Variational exchange, Variational Omni, Variational fees, Variational referral code, $VAR airdrop",
+          articleSection: "Review",
+          inLanguage: "en",
+        },
+        {
+          "@type": "FAQPage",
+          mainEntity: [
+            {
+              "@type": "Question",
+              name: "How much does Variational charge?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Variational Omni charges 0% maker and 0% taker fees on all markets. The cost to traders is the bid-ask spread quoted by the OLP, not an explicit trading fee.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Is Variational legit? Who backed it?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Variational raised a $50M Series A led by Dragonfly, with Bain Capital Crypto and Coinbase Ventures participating. Its contracts have been audited by Spearbit and Zellic.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Do I need an access code?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Yes. Omni is in private beta and requires an access (referral) code to onboard. The code grants access only — it is not a fee discount, since Variational already charges 0% fees.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Can US residents use Variational?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "No. Residents of the United States and Canada are restricted persons and cannot access Variational.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "What is the $VAR airdrop?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Variational runs a pre-token points program: every dollar of trading volume earns points toward the future $VAR token, with a community allocation targeted around 50% per the docs.",
+              },
+            },
+          ],
+        },
+      ],
+    },
+  },
+  "/insights/pre-ipo-perps-explained": {
+    title: "Pre-IPO Perps Explained: How They Work & Where to Trade | Variational",
+    description:
+      "What pre-IPO perpetuals are, how oracle pricing and funding tether them to private-market valuations, why the same contract diverges across venues, and how they compare to owning real shares.",
+    og: {
+      title: "Pre-IPO Perps Explained — How They Work and Where to Trade",
+      description:
+        "The definitive explainer: synthetic exposure, oracle pricing, cross-venue divergence, IPO conversion, and the risks — with live cross-venue data.",
+      image: `${SITE_URL}/og-insights.svg`,
+    },
+    twitter: {
+      title: "Pre-IPO Perps Explained: How They Work and Where to Trade",
+      description:
+        "Synthetic exposure, oracle pricing, cross-venue divergence, and the risks — the definitive pre-IPO perps explainer.",
+    },
+    jsonLd: {
+      "@graph": [
+        {
+          "@type": "Article",
+          headline: "Pre-IPO Perps Explained: How They Work and Where to Trade Them",
+          description:
+            "A definitive explainer on pre-IPO perpetual futures — synthetic exposure, oracle-based pricing, funding, cross-venue price divergence, IPO conversion, and risks.",
+          url: `${SITE_URL}/insights/pre-ipo-perps-explained`,
+          image: `${SITE_URL}/og-insights.svg`,
+          datePublished: "2026-07-06",
+          dateModified: "2026-07-06",
+          author: { "@type": "Organization", name: "tryvariational", url: SITE_URL },
+          publisher: {
+            "@type": "Organization",
+            name: "tryvariational",
+            url: SITE_URL,
+            logo: { "@type": "ImageObject", url: `${SITE_URL}/og-image.svg` },
+          },
+          mainEntityOfPage: {
+            "@type": "WebPage",
+            "@id": `${SITE_URL}/insights/pre-ipo-perps-explained`,
+          },
+          keywords:
+            "pre-IPO perps, pre-IPO perpetuals, pre-IPO trading platform, how pre-IPO perps work, synthetic exposure, oracle pricing",
+          articleSection: "Explainer",
+          inLanguage: "en",
+        },
+        {
+          "@type": "FAQPage",
+          mainEntity: [
+            {
+              "@type": "Question",
+              name: "Can you buy OpenAI pre-IPO?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Unaccredited retail can't buy OpenAI shares directly, but you can get synthetic price exposure through pre-IPO perpetuals that track OpenAI's private-market valuation — long or short, with no accreditation.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Is buying pre-IPO a good idea?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "It depends on risk tolerance. Pre-IPO perps are volatile and model-priced until real price discovery exists. They offer asymmetric upside and the ability to short, but carry oracle, funding, and leverage risk. This is not financial advice.",
+              },
+            },
+          ],
+        },
+      ],
+    },
+  },
+  "/insights/best-pre-ipo-platforms": {
+    title: "Best Ways to Buy Pre-IPO Stock in 2026: Forge vs EquityZen vs Hiive vs Perps",
+    description:
+      "Forge Global, EquityZen, and Hiive gate pre-IPO shares to accredited investors. How they compare to pre-IPO perps — and how anyone can go long or short OpenAI and Anthropic without accreditation.",
+    og: {
+      title: "Best Ways to Buy Pre-IPO Stock in 2026 — Forge, EquityZen, Hiive vs Perps",
+      description:
+        "A fair comparison of accredited-only secondary marketplaces vs synthetic pre-IPO perps. Own equity, or trade OpenAI/Anthropic with no accreditation.",
+      image: `${SITE_URL}/og-insights.svg`,
+    },
+    twitter: {
+      title: "Forge vs EquityZen vs Hiive vs Pre-IPO Perps",
+      description:
+        "Secondary marketplaces need accreditation; perps don't. How to get OpenAI & Anthropic exposure either way.",
+    },
+    jsonLd: {
+      "@graph": [
+        {
+          "@type": "Article",
+          headline: "Best Ways to Buy Pre-IPO Stock in 2026: Forge vs EquityZen vs Hiive vs Perps",
+          description:
+            "A fair comparison of accredited-only secondary-share marketplaces (Forge Global, EquityZen, Hiive) and synthetic pre-IPO perpetuals, and how to invest in OpenAI or Anthropic without accreditation.",
+          url: `${SITE_URL}/insights/best-pre-ipo-platforms`,
+          image: `${SITE_URL}/og-insights.svg`,
+          datePublished: "2026-07-06",
+          dateModified: "2026-07-06",
+          author: { "@type": "Organization", name: "tryvariational", url: SITE_URL },
+          publisher: {
+            "@type": "Organization",
+            name: "tryvariational",
+            url: SITE_URL,
+            logo: { "@type": "ImageObject", url: `${SITE_URL}/og-image.svg` },
+          },
+          mainEntityOfPage: {
+            "@type": "WebPage",
+            "@id": `${SITE_URL}/insights/best-pre-ipo-platforms`,
+          },
+          keywords:
+            "Forge Global alternative, EquityZen alternative, Hiive alternative, best pre-IPO platform, how to invest in OpenAI, how to invest in Anthropic, buy pre-IPO stock",
+          articleSection: "Comparison",
+          inLanguage: "en",
+        },
+        {
+          "@type": "FAQPage",
+          mainEntity: [
+            {
+              "@type": "Question",
+              name: "What is the best pre-IPO platform?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "It depends on whether you want real equity or price exposure. Forge Global, EquityZen, and Hiive sell actual secondary shares but require accredited-investor status; pre-IPO perpetuals offer synthetic exposure with no accreditation, long or short.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Which is better, Forge or Hiive?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Both are reputable, accredited-only secondary marketplaces with similar structures — Forge tends to have broader inventory, while Hiive emphasizes a direct marketplace model. Neither serves unaccredited retail; pre-IPO perps do.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Can I invest in Anthropic on Robinhood?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Robinhood does not offer direct private-company shares of Anthropic. Unaccredited investors typically access Anthropic exposure through pre-IPO perpetuals rather than buying equity.",
+              },
+            },
+          ],
+        },
+      ],
+    },
+  },
 };
 
 /* Organisation schema — injected on every page */

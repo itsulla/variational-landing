@@ -25,6 +25,15 @@ const AnthropicPreIpoPerps = lazy(() =>
 const FundingRateFarmingGuide = lazy(() =>
   import("./themes/insights/funding-rate-farming-guide.jsx")
 );
+const VariationalReview = lazy(() =>
+  import("./themes/insights/variational-review.jsx")
+);
+const PreIpoPerpsExplained = lazy(() =>
+  import("./themes/insights/pre-ipo-perps-explained.jsx")
+);
+const BestPreIpoPlatforms = lazy(() =>
+  import("./themes/insights/best-pre-ipo-platforms.jsx")
+);
 const PreIpo = lazy(() => import("./themes/preipo/index.jsx"));
 
 /* Nav header color presets per route */
@@ -105,6 +114,18 @@ export default function App() {
           <Route
             path="/insights/funding-rate-farming-guide"
             element={<FundingRateFarmingGuide />}
+          />
+          <Route
+            path="/insights/variational-review"
+            element={<VariationalReview />}
+          />
+          <Route
+            path="/insights/pre-ipo-perps-explained"
+            element={<PreIpoPerpsExplained />}
+          />
+          <Route
+            path="/insights/best-pre-ipo-platforms"
+            element={<BestPreIpoPlatforms />}
           />
           {/* /spcx and /spacex are vanity aliases for ad campaigns */}
           <Route path="/pre-ipo" element={<PreIpo />} />

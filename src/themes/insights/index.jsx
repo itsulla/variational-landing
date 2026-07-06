@@ -23,6 +23,36 @@ const FONTS = {
 /* Source of truth for the article index. New articles append here. */
 const ARTICLES = [
   {
+    slug: "best-pre-ipo-platforms",
+    title: "Best Ways to Buy Pre-IPO Stock in 2026: Forge vs EquityZen vs Hiive vs Perps",
+    subtitle:
+      "Secondary marketplaces gate pre-IPO shares to accredited investors. Here's how they compare to synthetic pre-IPO perps — and how anyone can get long or short OpenAI and Anthropic without accreditation.",
+    date: "July 6, 2026",
+    dateISO: "2026-07-06",
+    readTime: "10 min read",
+    tag: "Comparison",
+  },
+  {
+    slug: "variational-review",
+    title: "Variational Review 2026: Fees, Airdrop & Pre-IPO Markets",
+    subtitle:
+      "An honest, user-perspective review of Variational Omni — the 0%-fee RFQ model, 495+ markets, the $VAR airdrop, OpenAI/Anthropic pre-IPO perps, and the real caveats.",
+    date: "July 6, 2026",
+    dateISO: "2026-07-06",
+    readTime: "8 min read",
+    tag: "Review",
+  },
+  {
+    slug: "pre-ipo-perps-explained",
+    title: "Pre-IPO Perps Explained: How They Work and Where to Trade Them",
+    subtitle:
+      "What pre-IPO perpetuals are, how oracle pricing and funding keep them tethered to private-market valuations, why the same contract diverges across venues, and how they compare to owning real shares.",
+    date: "July 6, 2026",
+    dateISO: "2026-07-06",
+    readTime: "8 min read",
+    tag: "Explainer",
+  },
+  {
     slug: "openai-pre-ipo-perps",
     title: "How to Get OpenAI Pre-IPO Exposure in 2026",
     subtitle:

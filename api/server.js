@@ -1024,9 +1024,11 @@ app.get("/api/compare/three", async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-//  PRE-IPO CROSS-VENUE PRICES — SPCX / OPENAI / ANTHROPIC
+//  PRE-IPO CROSS-VENUE PRICES — OPENAI / ANTHROPIC
 // ═══════════════════════════════════════════════════════════════
-// Pulls marks for the three flagship pre-IPO perps from every venue
+// SpaceX has IPO'd and now trades as a standard SPCX stock perp, so it
+// is no longer part of the pre-IPO set — only still-private names remain.
+// Pulls marks for the flagship pre-IPO perps from every venue
 // with a public API reachable from this VPS:
 //   - Variational (mark_price), HL xyz sub-dex (markPx + oraclePx),
 //     Lighter (last trade), OKX (markPx), Gate.io (mark + index).
@@ -1036,7 +1038,7 @@ app.get("/api/compare/three", async (req, res) => {
 // (oraclePx); Gate exposes its index_price. Those are the closest
 // public windows into the off-chain reference price.
 
-const PRE_IPO_ASSETS = ["SPCX", "OPENAI", "ANTHROPIC"];
+const PRE_IPO_ASSETS = ["OPENAI", "ANTHROPIC"];
 
 async function buildPreIpoPrices() {
   const assets = {};

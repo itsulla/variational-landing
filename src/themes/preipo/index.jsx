@@ -30,18 +30,11 @@ const FONTS = {
   mono: "'JetBrains Mono', ui-monospace, monospace",
 };
 
-/* The three flagship pre-IPO perps — all verified live on the
- * Variational stats API. SPCX context: SpaceX IPO targeted June 12,
- * 2026 at a $135 reference price (~$1.77T valuation). */
+/* The flagship pre-IPO perps — the two biggest still-private AI
+ * companies, both verified live on the Variational stats API.
+ * (SpaceX has since IPO'd and now trades as a standard SPCX stock
+ * perp, so it's no longer listed here as pre-IPO.) */
 const PRE_IPO_MARKETS = [
-  {
-    ticker: "SPCX",
-    company: "SpaceX",
-    blurb:
-      "The most anticipated IPO on record — targeted for June 12, 2026 at a ~$1.77T valuation. SPCX perps track the implied pre-IPO price 24/7 and convert to regular stock perps after listing.",
-    tag: "IPO imminent",
-    tagColor: "#fbbf24",
-  },
   {
     ticker: "OPENAI",
     company: "OpenAI",
@@ -83,7 +76,7 @@ const HOW_IT_WORKS = [
     n: 4,
     title: "Know the risks",
     body:
-      "Pre-IPO perps are volatile by construction: the reference price is model-driven until real price discovery exists. SPCX moved $135 → $216 → -45% within days of launch across venues. Variational caps these markets at lower leverage and fixes funding at 0.005%/8h until IPO. Size accordingly.",
+      "Pre-IPO perps are volatile by construction: the reference price is model-driven until real price discovery exists. Early pre-IPO contracts have swung 50%+ within days of launch across venues. Variational caps these markets at lower leverage and fixes funding until IPO. Size accordingly.",
   },
 ];
 
@@ -161,7 +154,7 @@ function PriceComparison() {
             gap: 18,
           }}
         >
-          {["SPCX", "OPENAI", "ANTHROPIC"].map((a) => {
+          {["OPENAI", "ANTHROPIC"].map((a) => {
             const info = data.assets?.[a];
             if (!info || !info.venues?.length) return null;
             return (
@@ -318,7 +311,6 @@ export default function PreIpoTheme() {
             }}
           >
             Trade{" "}
-            <span style={{ color: THEME.accent }}>SpaceX</span>,{" "}
             <span style={{ color: THEME.accent2 }}>OpenAI</span> &{" "}
             <span style={{ color: THEME.accent2 }}>Anthropic</span>
             <br />
@@ -608,7 +600,7 @@ export default function PreIpoTheme() {
               },
               {
                 t: "One cross-margined account",
-                d: "Hold SPCX, gold, BTC perps, and Korean ETF exposure against a single USDC margin balance with Deribit-compatible portfolio margin.",
+                d: "Hold OpenAI, gold, BTC perps, and Korean ETF exposure against a single USDC margin balance with Deribit-compatible portfolio margin.",
               },
               {
                 t: "Private RFQ execution",

@@ -185,7 +185,7 @@ const RESPONSES = [
   "[OK] Connected to Variational RFQ Engine",
   "[OK] Privacy mode: ACTIVE",
   '[OK] Fee schedule: 0.00% (permanent)',
-  "[OK] Markets available: 495+ (incl. SPCX, OPENAI, ANTHROPIC)",
+  "[OK] Markets available: 495+ (incl. OPENAI, ANTHROPIC pre-IPO)",
   "[OK] Ready to execute.",
 ];
 

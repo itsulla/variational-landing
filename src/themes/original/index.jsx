@@ -321,7 +321,7 @@ export default function OriginalTheme() {
             marginBottom: 24,
           }}
         >
-          Trade <span style={{ color: THEME.accent }}>SpaceX, OpenAI &amp;
+          Trade <span style={{ color: THEME.accent }}>OpenAI &amp;
           Anthropic pre-IPO</span>, stocks, gold, oil and 495+ crypto perps.
           Zero fees.
         </h1>

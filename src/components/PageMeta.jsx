@@ -9,13 +9,13 @@ const SITE_URL = "https://tryvariational.xyz";
  */
 const PAGE_META = {
   "/": {
-    title: "Trade SpaceX & OpenAI Pre-IPO Perps, Stocks & Crypto | Variational",
+    title: "Trade OpenAI & Anthropic Pre-IPO Perps, Stocks & Crypto | Variational",
     description:
-      "Trade SpaceX, OpenAI & Anthropic pre-IPO perps, stocks, ETFs, commodities and 495+ crypto markets with zero trading fees on Variational. Earn points toward the $VAR airdrop. Built on Arbitrum.",
+      "Trade OpenAI & Anthropic pre-IPO perps plus stocks (incl. SpaceX), ETFs, commodities and 495+ crypto markets with zero trading fees on Variational. Earn points toward the $VAR airdrop. Built on Arbitrum.",
     og: {
       title: "Trade Pre-IPO Perps, Stocks & Crypto with Zero Fees | Variational",
       description:
-        "Zero fees. SpaceX, OpenAI & Anthropic pre-IPO perps plus 495+ markets on Arbitrum.",
+        "Zero fees. OpenAI & Anthropic pre-IPO perps plus 495+ markets on Arbitrum.",
       image: `${SITE_URL}/og-image.svg`,
     },
     twitter: {
@@ -171,17 +171,17 @@ const PAGE_META = {
   },
   "/pre-ipo": {
     title:
-      "Trade SpaceX, OpenAI & Anthropic Pre-IPO Perps with Zero Fees | Variational",
+      "Trade OpenAI & Anthropic Pre-IPO Perps with Zero Fees | Variational",
     description:
-      "Get long or short exposure to SpaceX (SPCX), OpenAI, and Anthropic before they go public. Pre-IPO perpetuals with 0% trading fees on Variational Omni — no accreditation, no broker, 24/7.",
+      "Get long or short exposure to OpenAI and Anthropic before they go public. Pre-IPO perpetuals with 0% trading fees on Variational Omni — no accreditation, no broker, 24/7.",
     og: {
-      title: "Trade SpaceX, OpenAI & Anthropic Before They IPO",
+      title: "Trade OpenAI & Anthropic Before They IPO",
       description:
-        "Pre-IPO perpetuals with 0% fees. Long or short SPCX, OPENAI, ANTHROPIC — 24/7, on-chain, no accreditation.",
+        "Pre-IPO perpetuals with 0% fees. Long or short OPENAI, ANTHROPIC — 24/7, on-chain, no accreditation.",
       image: `${SITE_URL}/og-preipo.svg`,
     },
     twitter: {
-      title: "Trade SpaceX, OpenAI & Anthropic Before They IPO",
+      title: "Trade OpenAI & Anthropic Before They IPO",
       description:
         "Pre-IPO perps with 0% fees on Variational Omni. No accreditation, no broker, 24/7 on-chain.",
     },
@@ -189,7 +189,7 @@ const PAGE_META = {
       "@type": "WebPage",
       name: "Pre-IPO Perpetuals on Variational",
       description:
-        "Trade pre-IPO perpetual futures on SpaceX, OpenAI, and Anthropic with zero trading fees.",
+        "Trade pre-IPO perpetual futures on OpenAI and Anthropic with zero trading fees.",
       url: `${SITE_URL}/pre-ipo`,
     },
   },

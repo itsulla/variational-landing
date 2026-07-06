@@ -7,17 +7,15 @@
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
   <text x="100" y="130" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="#7dd3fc" letter-spacing="3">PRE-IPO PERPETUALS · LIVE NOW</text>
-  <text x="100" y="225" font-family="system-ui, sans-serif" font-size="58" font-weight="700" fill="#eef1f8">Trade <tspan fill="#7dd3fc">SpaceX</tspan>, <tspan fill="#c4b5fd">OpenAI</tspan></text>
-  <text x="100" y="293" font-family="system-ui, sans-serif" font-size="58" font-weight="700" fill="#eef1f8">&amp; <tspan fill="#c4b5fd">Anthropic</tspan> before the IPO</text>
+  <text x="100" y="225" font-family="system-ui, sans-serif" font-size="58" font-weight="700" fill="#eef1f8">Trade <tspan fill="#7dd3fc">OpenAI</tspan> &amp;</text>
+  <text x="100" y="293" font-family="system-ui, sans-serif" font-size="58" font-weight="700" fill="#eef1f8"><tspan fill="#c4b5fd">Anthropic</tspan> before the IPO</text>
   <text x="100" y="375" font-family="system-ui, sans-serif" font-size="24" fill="#c3cbdc">0% trading fees · Long or short · 24/7 on-chain</text>
   <text x="100" y="410" font-family="system-ui, sans-serif" font-size="24" fill="#c3cbdc">No accreditation · No broker · One cross-margined account</text>
   <g transform="translate(100, 480)">
-    <rect width="130" height="40" rx="20" fill="#7dd3fc" fill-opacity="0.14" stroke="#7dd3fc" stroke-opacity="0.5"/>
-    <text x="24" y="26" font-family="ui-monospace, monospace" font-size="16" fill="#7dd3fc" font-weight="700">$SPCX</text>
-    <rect x="150" width="150" height="40" rx="20" fill="#c4b5fd" fill-opacity="0.14" stroke="#c4b5fd" stroke-opacity="0.5"/>
-    <text x="172" y="26" font-family="ui-monospace, monospace" font-size="16" fill="#c4b5fd" font-weight="700">$OPENAI</text>
-    <rect x="320" width="190" height="40" rx="20" fill="#c4b5fd" fill-opacity="0.14" stroke="#c4b5fd" stroke-opacity="0.5"/>
-    <text x="342" y="26" font-family="ui-monospace, monospace" font-size="16" fill="#c4b5fd" font-weight="700">$ANTHROPIC</text>
+    <rect width="150" height="40" rx="20" fill="#7dd3fc" fill-opacity="0.14" stroke="#7dd3fc" stroke-opacity="0.5"/>
+    <text x="22" y="26" font-family="ui-monospace, monospace" font-size="16" fill="#7dd3fc" font-weight="700">$OPENAI</text>
+    <rect x="170" width="190" height="40" rx="20" fill="#c4b5fd" fill-opacity="0.14" stroke="#c4b5fd" stroke-opacity="0.5"/>
+    <text x="192" y="26" font-family="ui-monospace, monospace" font-size="16" fill="#c4b5fd" font-weight="700">$ANTHROPIC</text>
   </g>
   <text x="1100" y="592" text-anchor="end" font-family="system-ui, sans-serif" font-size="16" fill="#64748b">tryvariational.xyz/pre-ipo</text>
 </svg>

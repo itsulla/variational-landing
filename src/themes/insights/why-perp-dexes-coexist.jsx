@@ -263,11 +263,11 @@ export default function WhyPerpDexesCoexist() {
           get rebates and post liquidity. Traders see depth, post limits, and
           execute the way they would on Binance. Daily volume sits above $6B,
           and Hyperliquid's "xyz" sub-protocol now does another $1.8B/day in
-          RWA perps — oil, stocks, indices, even the{" "}
+          RWA perps — oil, stocks, indices, even AI names like{" "}
           <code style={{ fontFamily: FONTS.mono, fontSize: "0.94em", color: THEME.accent }}>
-            SPCX
+            OPENAI
           </code>{" "}
-          SpaceX pre-IPO contract.{" "}
+          pre-IPO contracts.{" "}
           <span style={strong}>
             This is the venue for traders who think in order books:
           </span>{" "}
@@ -361,9 +361,9 @@ export default function WhyPerpDexesCoexist() {
             books.
           </li>
           <li style={{ marginBottom: 10 }}>
-            <span style={strong}>Pre-IPO perpetuals</span> — SPCX (SpaceX),
-            and whatever comes after, opens an asset class that has no
-            on-chain equivalent today.
+            <span style={strong}>Pre-IPO perpetuals</span> — OpenAI,
+            Anthropic, and whatever comes after open an asset class that has
+            no on-chain equivalent today.
           </li>
           <li style={{ marginBottom: 10 }}>
             <span style={strong}>OTC institutional flow</span> — Variational's

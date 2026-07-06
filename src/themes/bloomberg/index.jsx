@@ -195,7 +195,7 @@ function TopBar() {
    ═════════════════════════════════════════════════════════════════════ */
 function TickerBar() {
   const content =
-    "BTC/USDC 0% FEE \u2022 ETH/USDC 0% FEE \u2022 SOL/USDC 0% FEE \u2022 $260B+ VOLUME \u2022 495+ MARKETS \u2022 SPCX·OPENAI·ANTHROPIC PRE-IPO \u2022 $50M SERIES A \u2022 PRIVATE BETA \u2022 ";
+    "BTC/USDC 0% FEE \u2022 ETH/USDC 0% FEE \u2022 SOL/USDC 0% FEE \u2022 $260B+ VOLUME \u2022 495+ MARKETS \u2022 OPENAI·ANTHROPIC PRE-IPO \u2022 $50M SERIES A \u2022 PRIVATE BETA \u2022 ";
 
   const track = {
     overflow: "hidden",

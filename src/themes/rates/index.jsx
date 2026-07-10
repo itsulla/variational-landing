@@ -282,6 +282,48 @@ function exchangeFullName(name) {
   return map[(name || "").toLowerCase()] || (name || "").charAt(0).toUpperCase() + (name || "").slice(1);
 }
 
+/* Recompute a row's best CEX/DEX leg among only the *visible* exchanges.
+ * Each opportunity carries an `exchanges` map { name: annualRate }; when the
+ * user hides venues we re-pick the widest-spread visible one and rederive the
+ * spread, direction, and per-notional PnL. Returns null if no visible venue
+ * has data for that ticker (row is dropped). Falls back to the single best
+ * venue if the API payload predates the `exchanges` field. */
+function recomputeForVisible(opp, hidden) {
+  const exchanges =
+    opp.exchanges && Object.keys(opp.exchanges).length
+      ? opp.exchanges
+      : { [opp.cex_exchange]: opp.cex_rate_annual };
+  const varRate = opp.var_rate_annual;
+
+  let bestEx = null;
+  let bestRate = 0;
+  let bestSpread = -1;
+  for (const [name, rate] of Object.entries(exchanges)) {
+    if (hidden.has(name)) continue;
+    const spread = Math.abs(varRate - rate);
+    if (spread > bestSpread) {
+      bestSpread = spread;
+      bestEx = name;
+      bestRate = rate;
+    }
+  }
+  if (!bestEx) return null;
+
+  const daily10k = (bestSpread / 365 / 100) * 10000;
+  return {
+    ...opp,
+    cex_exchange: bestEx,
+    cex_rate_annual: Math.round(bestRate * 100) / 100,
+    spread_annual: Math.round(bestSpread * 100) / 100,
+    direction: varRate > bestRate ? "short_var_long_cex" : "long_var_short_cex",
+    daily_pnl_10k: Math.round(daily10k * 100) / 100,
+    daily_pnl_50k: Math.round(daily10k * 5 * 100) / 100,
+    daily_pnl_100k: Math.round(daily10k * 10 * 100) / 100,
+  };
+}
+
+const EXCHANGE_FILTER_KEY = "var_rates_hidden_exchanges";
+
 /* ─── CEX Fee Tables ──────────────────────────────────────────────
    Maker/taker fees as basis-point-equivalent percentages (0.02 = 0.02%).
    fundingInterval is hours per funding cycle — drives the per-period
@@ -851,15 +893,62 @@ function OpportunitiesTable({ opportunities }) {
   const [showAll, setShowAll] = useState(false);
   const [expandedTicker, setExpandedTicker] = useState(null);
 
+  // All venues present across the current data (union of each row's map).
+  const allExchanges = useMemo(() => {
+    const set = new Set();
+    for (const o of opportunities) {
+      const ex = o.exchanges && Object.keys(o.exchanges).length
+        ? Object.keys(o.exchanges)
+        : [o.cex_exchange];
+      ex.forEach((e) => e && set.add(e));
+    }
+    return Array.from(set).sort((a, b) =>
+      exchangeFullName(a).localeCompare(exchangeFullName(b))
+    );
+  }, [opportunities]);
+
+  // Hidden venues — persisted so a trader's preferred set sticks between visits.
+  const [hidden, setHidden] = useState(() => {
+    try {
+      const raw = localStorage.getItem(EXCHANGE_FILTER_KEY);
+      return new Set(raw ? JSON.parse(raw) : []);
+    } catch {
+      return new Set();
+    }
+  });
+
+  const toggleExchange = useCallback((name) => {
+    setHidden((prev) => {
+      const next = new Set(prev);
+      next.has(name) ? next.delete(name) : next.add(name);
+      try { localStorage.setItem(EXCHANGE_FILTER_KEY, JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
+  const setAllHidden = useCallback((hideAll) => {
+    setHidden(() => {
+      const next = hideAll ? new Set(allExchanges) : new Set();
+      try { localStorage.setItem(EXCHANGE_FILTER_KEY, JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  }, [allExchanges]);
+
+  // Recompute each row's best leg among visible venues, then sort.
+  const recomputed = useMemo(
+    () => opportunities.map((o) => recomputeForVisible(o, hidden)).filter(Boolean),
+    [opportunities, hidden]
+  );
+
   const sorted = useMemo(() => {
-    const arr = [...opportunities];
+    const arr = [...recomputed];
     arr.sort((a, b) => {
       const aVal = a[sortKey] ?? 0;
       const bVal = b[sortKey] ?? 0;
       return sortDir === "desc" ? bVal - aVal : aVal - bVal;
     });
     return arr;
-  }, [opportunities, sortKey, sortDir]);
+  }, [recomputed, sortKey, sortDir]);
 
   const visible = showAll ? sorted : sorted.slice(0, 15);
 
@@ -929,6 +1018,84 @@ function OpportunitiesTable({ opportunities }) {
             Click any row for full trade plan
           </div>
         </div>
+
+        {/* ── Exchange filter — hide/show venues; best spread recomputes ── */}
+        {allExchanges.length > 1 && (
+          <div style={{ marginBottom: 16 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                flexWrap: "wrap",
+                marginBottom: 10,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: FONTS.mono,
+                  fontSize: "0.62rem",
+                  fontWeight: 600,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: THEME.muted,
+                }}
+              >
+                Compare vs
+              </span>
+              <button
+                onClick={() => setAllHidden(false)}
+                style={{
+                  fontFamily: FONTS.mono, fontSize: "0.6rem", letterSpacing: "0.06em",
+                  color: THEME.accent, background: "transparent",
+                  border: `1px solid ${THEME.accent}44`, borderRadius: 4,
+                  padding: "3px 8px", cursor: "pointer", textTransform: "uppercase",
+                }}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setAllHidden(true)}
+                style={{
+                  fontFamily: FONTS.mono, fontSize: "0.6rem", letterSpacing: "0.06em",
+                  color: THEME.muted, background: "transparent",
+                  border: `1px solid ${THEME.borderColor}`, borderRadius: 4,
+                  padding: "3px 8px", cursor: "pointer", textTransform: "uppercase",
+                }}
+              >
+                None
+              </button>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {allExchanges.map((name) => {
+                const isHidden = hidden.has(name);
+                return (
+                  <button
+                    key={name}
+                    onClick={() => toggleExchange(name)}
+                    title={isHidden ? `Show ${exchangeFullName(name)}` : `Hide ${exchangeFullName(name)}`}
+                    style={{
+                      fontFamily: FONTS.mono,
+                      fontSize: "0.66rem",
+                      letterSpacing: "0.04em",
+                      padding: "5px 11px",
+                      borderRadius: 999,
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                      border: `1px solid ${isHidden ? THEME.borderColor : `${THEME.accent}66`}`,
+                      background: isHidden ? "transparent" : `${THEME.accent}18`,
+                      color: isHidden ? `${THEME.text}55` : THEME.accent,
+                      textDecoration: isHidden ? "line-through" : "none",
+                    }}
+                  >
+                    {exchangeFullName(name)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div
           style={{
             overflowX: "auto",
@@ -961,6 +1128,22 @@ function OpportunitiesTable({ opportunities }) {
               </tr>
             </thead>
             <tbody>
+              {visible.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={columns.length}
+                    style={{
+                      ...tdBase,
+                      textAlign: "center",
+                      color: THEME.muted,
+                      padding: "28px 14px",
+                      whiteSpace: "normal",
+                    }}
+                  >
+                    No venues selected — turn a few back on above to see spreads.
+                  </td>
+                </tr>
+              )}
               {visible.map((row, idx) => {
                 const isExpanded = expandedTicker === row.ticker;
                 const rowBg = isExpanded ? "#1a1710" : (idx % 2 === 0 ? THEME.cardBg : "#1a1814");

@@ -625,8 +625,13 @@ async function buildOpportunities() {
     let bestExchangeRate = 0;
     let bestSpread = 0;
 
+    // Per-exchange annualized rates — exposed so the frontend can let
+    // users hide/show individual venues and recompute the best spread
+    // among the ones they keep visible.
+    const exchanges = {};
     for (const [exchange, data] of Object.entries(tickerExchanges)) {
       const exAnnual = data.rate8h * data.periodsPerDay * 365 * 100;
+      exchanges[exchange] = Math.round(exAnnual * 100) / 100;
       const spread = Math.abs(varAnnual - exAnnual);
       if (spread > bestSpread) {
         bestSpread = spread;
@@ -653,6 +658,7 @@ async function buildOpportunities() {
       daily_pnl_100k: Math.round(dailyPer10k * 10 * 100) / 100,
       var_mark_price: markPrice,
       volume_24h: Math.round(volume24h),
+      exchanges,
     });
   }
 

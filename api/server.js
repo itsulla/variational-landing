@@ -427,12 +427,27 @@ async function fetchLithuaniaFundingRates(tickers) {
 //  EXCHANGE RATE SOURCES (CEX + DEX)
 // ═══════════════════════════════════════════════════════════════
 
-const TICKERS = ["BTC", "ETH", "SOL", "DOGE", "AVAX", "ARB", "LINK", "OP", "WIF", "PEPE", "MATIC", "SUI"];
+// Canonical tickers = Variational's own listing names. MATIC was renamed
+// to POL and PEPE trades as the scaled 1000PEPE on Variational; other venues
+// disagree on the meme-coin scale name (HL: kPEPE, OKX/Gate/Bitget: PEPE),
+// resolved per-venue in venueBase(). Funding RATE % is scale-invariant, so
+// 1000PEPE ↔ PEPE ↔ kPEPE is a valid rate comparison.
+const TICKERS = ["BTC", "ETH", "SOL", "DOGE", "AVAX", "ARB", "LINK", "OP", "WIF", "1000PEPE", "POL", "SUI", "HYPE"];
+
+// Canonical ticker → venue-specific base name, for the few that differ.
+function venueBase(ticker, venue) {
+  if (ticker === "1000PEPE") {
+    if (venue === "hyperliquid") return "kPEPE";
+    if (venue === "okx" || venue === "gate" || venue === "bitget") return "PEPE";
+    return "1000PEPE"; // binance/bybit/coinalyze use 1000PEPE
+  }
+  return ticker;
+}
 
 // edgeX contract ID mapping
 const EDGEX_CONTRACTS = {
   BTC: "10000001", ETH: "10000002", SOL: "10000003", AVAX: "10000007",
-  MATIC: "10000008", DOGE: "10000010", PEPE: "10000011", SUI: "10000014",
+  POL: "10000008", DOGE: "10000010", "1000PEPE": "10000011", SUI: "10000014",
   WIF: "10000015", ARB: "10000019", OP: "10000020", LINK: "10000006",
 };
 
@@ -482,7 +497,8 @@ async function fetchAllExchangeRates() {
     });
     const universe = metaResp?.universe || [];
     for (const ticker of TICKERS) {
-      const idx = universe.findIndex((u) => u.name === ticker);
+      const hlName = venueBase(ticker, "hyperliquid");
+      const idx = universe.findIndex((u) => u.name === hlName);
       if (idx === -1 || !assetCtxs?.[idx]) continue;
       const ctx = assetCtxs[idx];
       if (!results[ticker]) results[ticker] = {};
@@ -552,7 +568,7 @@ async function fetchAllExchangeRates() {
   try {
     const data = await fetchJSON("https://api.bitget.com/api/v2/mix/market/tickers?productType=USDT-FUTURES");
     for (const ticker of TICKERS) {
-      const symbol = ticker === "MATIC" ? "POLUSDT" : `${ticker}USDT`;
+      const symbol = `${venueBase(ticker, "bitget")}USDT`;
       const item = (data?.data || []).find((d) => d.symbol === symbol);
       if (!item) continue;
       if (!results[ticker]) results[ticker] = {};
@@ -567,9 +583,9 @@ async function fetchAllExchangeRates() {
   }
 
   // ── OKX (CEX) — per ticker, fetched in parallel ──
-  await Promise.all(TICKERS.slice(0, 8).map(async (ticker) => {
+  await Promise.all(TICKERS.map(async (ticker) => {
     try {
-      const instId = ticker === "MATIC" ? "POL-USDT-SWAP" : `${ticker}-USDT-SWAP`;
+      const instId = `${venueBase(ticker, "okx")}-USDT-SWAP`;
       const data = await fetchJSON(`https://www.okx.com/api/v5/public/funding-rate?instId=${instId}`);
       const item = data?.data?.[0];
       if (!item) return;
@@ -582,9 +598,9 @@ async function fetchAllExchangeRates() {
   }));
 
   // ── Gate.io (CEX) — per ticker, fetched in parallel ──
-  await Promise.all(TICKERS.slice(0, 6).map(async (ticker) => {
+  await Promise.all(TICKERS.map(async (ticker) => {
     try {
-      const contract = ticker === "MATIC" ? "POL_USDT" : `${ticker}_USDT`;
+      const contract = `${venueBase(ticker, "gate")}_USDT`;
       const data = await fetchJSON(`https://api.gateio.ws/api/v4/futures/usdt/contracts/${contract}`);
       if (!data?.funding_rate) return;
       if (!results[ticker]) results[ticker] = {};

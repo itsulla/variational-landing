@@ -682,9 +682,101 @@ async function buildOpportunities() {
   return opportunities;
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  TRADFI / RWA FUNDING — Variational vs Hyperliquid HIP-3 (xyz)
+// ═══════════════════════════════════════════════════════════════
+// Stocks, ETFs, indices, commodities and FX trade as perps on both
+// Variational (native RWA markets) and Hyperliquid's HIP-3 builder dex
+// "xyz". This is a distinct comparison from the crypto one: CEXes don't
+// list these, so it's a two-venue (Variational vs HL-HIP3) funding view.
+// Match is by UNDERLYING — a few names differ between venues (below).
+const TRADFI_ALIAS = {
+  SP500: "US500", GOLD: "XAU", SILVER: "XAG", BRENTOIL: "BZ", NATGAS: "NG",
+};
+const TRADFI_MIN_VOL = 50000; // both sides must clear this 24h volume
+
+function tradfiCategory(ticker) {
+  const t = ticker.toUpperCase();
+  if (["XAU", "XAG", "BZ", "CL", "COPPER", "NG", "PLATINUM", "PALLADIUM"].includes(t)) return "Commodity";
+  if (["US500", "EWY", "EWJ", "EWZ", "EWT", "QQQ", "SOXL", "SMH", "XLE", "JP225", "KR200", "SPY", "DIA"].includes(t)) return "ETF / Index";
+  if (["JPY", "EUR", "GBP", "NOK", "KRW"].includes(t)) return "FX";
+  if (["SPCX", "OPENAI", "ANTHROPIC"].includes(t)) return "Pre-IPO / Space";
+  return "Stock";
+}
+
+// Hyperliquid HIP-3 "xyz" funding — hourly rate, same cadence as HL core.
+async function fetchHyperliquidHip3Rates() {
+  const [meta, ctxs] = await fetchJSON("https://api.hyperliquid.xyz/info", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type: "metaAndAssetCtxs", dex: "xyz" }),
+  });
+  const out = {};
+  const uni = meta?.universe || [];
+  for (let i = 0; i < uni.length; i++) {
+    const name = (uni[i].name || "").replace(/^xyz:/, "").toUpperCase();
+    const ctx = ctxs?.[i];
+    if (!name || !ctx) continue;
+    out[name] = {
+      annualRate: (parseFloat(ctx.funding) || 0) * 24 * 365 * 100, // hourly → %/yr
+      markPrice: parseFloat(ctx.markPx) || 0,
+      volume24h: parseFloat(ctx.dayNtlVlm) || 0,
+    };
+  }
+  return out;
+}
+
+async function buildTradfiOpportunities() {
+  const [varData, hlRates] = await Promise.all([
+    fetchVariationalRates(),
+    fetchHyperliquidHip3Rates(),
+  ]);
+
+  const opps = [];
+  for (const [hlName, hl] of Object.entries(hlRates)) {
+    const vtk = TRADFI_ALIAS[hlName] || hlName;
+    const vr = varData.rates[vtk];
+    if (!vr) continue;
+    if (hl.volume24h < TRADFI_MIN_VOL || vr.volume24h < TRADFI_MIN_VOL) continue;
+
+    const varAnnual = vr.annualRate;
+    const hlAnnual = hl.annualRate;
+    const spread = Math.abs(varAnnual - hlAnnual);
+    const daily10k = (spread / 365 / 100) * 10000;
+
+    opps.push({
+      ticker: vtk,
+      hl_market: hlName,
+      category: tradfiCategory(vtk),
+      var_rate_annual: Math.round(varAnnual * 100) / 100,
+      hl_rate_annual: Math.round(hlAnnual * 100) / 100,
+      spread_annual: Math.round(spread * 100) / 100,
+      // Collect the side paying more funding: short the higher-funding venue,
+      // long the lower one (net-delta-neutral on the underlying).
+      direction: varAnnual < hlAnnual ? "long_var_short_hl" : "short_var_long_hl",
+      daily_pnl_10k: Math.round(daily10k * 100) / 100,
+      daily_pnl_50k: Math.round(daily10k * 5 * 100) / 100,
+      daily_pnl_100k: Math.round(daily10k * 10 * 100) / 100,
+      var_mark_price: vr.markPrice,
+      var_volume_24h: Math.round(vr.volume24h),
+      hl_volume_24h: Math.round(hl.volume24h),
+    });
+  }
+
+  opps.sort((a, b) => b.spread_annual - a.spread_annual);
+  return opps;
+}
+
 // ─── /api/rates/opportunities ───────────────────────────────────
 app.get("/api/rates/opportunities", cached("rates_opp", 5 * 60 * 1000, async () => {
   const opportunities = await buildOpportunities();
+  return { opportunities };
+}));
+
+// ─── /api/rates/tradfi ──────────────────────────────────────────
+// Variational vs Hyperliquid HIP-3 funding for stocks/ETFs/commodities.
+app.get("/api/rates/tradfi", cached("rates_tradfi", 5 * 60 * 1000, async () => {
+  const opportunities = await buildTradfiOpportunities();
   return { opportunities };
 }));
 

@@ -1927,6 +1927,160 @@ function Disclaimer() {
 /* ═════════════════════════════════════════════════════════════════════
    MAIN PAGE EXPORT
    ═════════════════════════════════════════════════════════════════════ */
+/* ═════════════════════════════════════════════════════════════════════
+   TRADFI / RWA TABLE — Variational vs Hyperliquid HIP-3
+   ═════════════════════════════════════════════════════════════════════ */
+function useTradfiData() {
+  const [rows, setRows] = useState([]);
+  useEffect(() => {
+    let cancelled = false;
+    async function go() {
+      try {
+        const res = await fetch(`${RATES_API_BASE}/api/rates/tradfi`);
+        if (!res.ok) throw new Error("api");
+        const d = await res.json();
+        if (!cancelled) setRows(d.opportunities || []);
+      } catch {
+        if (!cancelled) setRows([]);
+      }
+    }
+    go();
+    const iv = setInterval(go, 5 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, []);
+  return rows;
+}
+
+function formatTradfiDirection(direction) {
+  return direction === "long_var_short_hl"
+    ? "Long VAR / Short HL"
+    : "Short VAR / Long HL";
+}
+
+function TradfiTable() {
+  const rows = useTradfiData();
+  const [hiddenCats, setHiddenCats] = useState(new Set());
+  const [showAll, setShowAll] = useState(false);
+
+  const cats = useMemo(
+    () => Array.from(new Set(rows.map((r) => r.category))).sort(),
+    [rows]
+  );
+
+  const filtered = useMemo(
+    () => rows.filter((r) => !hiddenCats.has(r.category)),
+    [rows, hiddenCats]
+  );
+  const visible = showAll ? filtered : filtered.slice(0, 15);
+
+  const toggleCat = useCallback((c) => {
+    setHiddenCats((prev) => {
+      const next = new Set(prev);
+      next.has(c) ? next.delete(c) : next.add(c);
+      return next;
+    });
+  }, []);
+
+  if (!rows.length) return null;
+
+  const th = {
+    fontFamily: FONTS.mono, fontSize: "0.62rem", fontWeight: 600,
+    letterSpacing: "0.1em", color: THEME.muted, textTransform: "uppercase",
+    padding: "12px 14px", textAlign: "left",
+    borderBottom: `1px solid ${THEME.borderColor}`, whiteSpace: "nowrap",
+    background: "#0f0e0b", position: "sticky", top: 0,
+  };
+  const td = {
+    fontFamily: FONTS.mono, fontSize: "0.8rem", padding: "11px 14px",
+    borderBottom: `1px solid ${THEME.borderColor}`, whiteSpace: "nowrap",
+  };
+
+  return (
+    <section style={{ padding: "20px 0 60px", borderBottom: `1px solid ${THEME.borderColor}` }}>
+      <div style={container}>
+        <div style={sectionLabel}>SECTION 03</div>
+        <div style={sectionTitle}>TRADFI &amp; RWA PERPS</div>
+        <div style={{ fontFamily: FONTS.mono, fontSize: "0.72rem", color: `${THEME.text}88`, lineHeight: 1.6, marginBottom: 20, maxWidth: 720 }}>
+          Stocks, ETFs, indices and commodities trade as perps on both Variational
+          and Hyperliquid's HIP-3 <span style={{ color: THEME.muted }}>xyz</span> dex.
+          Variational runs near-zero funding on most of these while HIP-3 charges
+          real funding — so the spread is often collectable delta-neutral. Matched
+          by underlying (e.g. XAU↔GOLD, US500↔SP500, BZ↔BRENTOIL).
+        </div>
+
+        {/* Category filter */}
+        {cats.length > 1 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+            {cats.map((c) => {
+              const off = hiddenCats.has(c);
+              return (
+                <button
+                  key={c}
+                  onClick={() => toggleCat(c)}
+                  style={{
+                    fontFamily: FONTS.mono, fontSize: "0.66rem", letterSpacing: "0.04em",
+                    padding: "5px 11px", borderRadius: 999, cursor: "pointer",
+                    border: `1px solid ${off ? THEME.borderColor : `${THEME.accent}66`}`,
+                    background: off ? "transparent" : `${THEME.accent}18`,
+                    color: off ? `${THEME.text}55` : THEME.accent,
+                    textDecoration: off ? "line-through" : "none",
+                  }}
+                >
+                  {c}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div style={{ overflowX: "auto", border: `1px solid ${THEME.borderColor}`, background: THEME.cardBg }}>
+          <table style={{ width: "100%", minWidth: 900, borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                {["ASSET", "CATEGORY", "VAR RATE", "HL HIP-3 RATE", "SPREAD", "DIRECTION", "$10K/DAY", "VAR VOL", "HL VOL"].map((h) => (
+                  <th key={h} style={th}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {visible.length === 0 && (
+                <tr><td colSpan={9} style={{ ...td, textAlign: "center", color: THEME.muted, padding: "28px 14px", whiteSpace: "normal" }}>
+                  No categories selected.
+                </td></tr>
+              )}
+              {visible.map((r, idx) => (
+                <tr key={r.ticker} style={{ background: idx % 2 === 0 ? THEME.cardBg : "#1a1814" }}>
+                  <td style={{ ...td, fontWeight: 700, color: THEME.text }}>{r.ticker}</td>
+                  <td style={{ ...td, color: THEME.muted, fontSize: "0.7rem" }}>{r.category}</td>
+                  <td style={{ ...td, color: r.var_rate_annual >= 0 ? THEME.positive : THEME.negative }}>{fmtRate(r.var_rate_annual)}</td>
+                  <td style={{ ...td, color: r.hl_rate_annual >= 0 ? THEME.positive : THEME.negative }}>{fmtRate(r.hl_rate_annual)}</td>
+                  <td style={{ ...td, color: THEME.accent, fontWeight: 700 }}>{fmtRate(r.spread_annual)}</td>
+                  <td style={{ ...td, color: `${THEME.text}99`, fontSize: "0.72rem" }}>{formatTradfiDirection(r.direction)}</td>
+                  <td style={{ ...td, color: THEME.positive, fontWeight: 600 }}>{fmtDollar(r.daily_pnl_10k)}</td>
+                  <td style={{ ...td, color: THEME.muted, fontSize: "0.7rem" }}>{fmtVolume(r.var_volume_24h)}</td>
+                  <td style={{ ...td, color: THEME.muted, fontSize: "0.7rem" }}>{fmtVolume(r.hl_volume_24h)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {filtered.length > 15 && (
+          <button
+            onClick={() => setShowAll((s) => !s)}
+            style={{
+              marginTop: 14, fontFamily: FONTS.mono, fontSize: "0.7rem", letterSpacing: "0.06em",
+              color: THEME.accent, background: "transparent", border: `1px solid ${THEME.accent}44`,
+              borderRadius: 4, padding: "7px 16px", cursor: "pointer", textTransform: "uppercase",
+            }}
+          >
+            {showAll ? "Show less" : `Show all ${filtered.length}`}
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default function RatesTheme() {
   const [ready, setReady] = useState(false);
   const { data, loading } = useRatesData();
@@ -1965,6 +2119,7 @@ export default function RatesTheme() {
       <SummaryStats summary={summary} />
       <Hero />
       <OpportunitiesTable opportunities={opportunities} />
+      <TradfiTable />
       <EarningsCalculator opportunities={opportunities} />
       <HistoricalChart opportunities={opportunities} />
       <HowItWorks />

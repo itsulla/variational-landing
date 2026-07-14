@@ -1,5 +1,11 @@
 import { useState, useMemo } from "react";
-import { getWeeksRemaining, REFERRAL_LINK } from "../config.js";
+import {
+  getWeeksRemaining,
+  getProgramWeeks,
+  getWeeksElapsed,
+  POINTS_DATA,
+  REFERRAL_LINK,
+} from "../config.js";
 
 const FDV_OPTIONS = [
   { label: "$500M", value: 500_000_000 },
@@ -27,12 +33,22 @@ export default function AirdropCalculator({ theme, fonts }) {
   const t = theme;
   const [fdv, setFdv] = useState(1_000_000_000);
   const [userPoints, setUserPoints] = useState(100);
-  const [totalPoints, setTotalPoints] = useState(9_500_000);
+  // Tournament pools are the one genuinely uncertain component, so it stays
+  // editable; genesis (3M) and weekly (150k × program weeks) are derived.
+  const [tournamentPoints, setTournamentPoints] = useState(POINTS_DATA.tournamentPoints);
   const [weeklyVolume, setWeeklyVolume] = useState(1_000_000);
   const [pointsRate, setPointsRate] = useState(5);
   const [communityPct, setCommunityPct] = useState(10);
 
   const weeksRemaining = getWeeksRemaining();
+  const programWeeks = getProgramWeeks();
+  const weeksElapsed = getWeeksElapsed();
+
+  // Total points at TGE, DERIVED from the confirmed schedule rather than a
+  // blind guess: genesis + 150k/week × total program weeks + tournament pools.
+  const weeklyTotal = POINTS_DATA.weeklyPoints * programWeeks;
+  const totalPoints =
+    POINTS_DATA.retroactivePoints + weeklyTotal + tournamentPoints;
 
   const results = useMemo(() => {
     const tokenPool = fdv * (communityPct / 100);
@@ -190,22 +206,83 @@ export default function AirdropCalculator({ theme, fonts }) {
         min={0}
       />
 
-      {/* Total Points at TGE */}
-      <div style={labelStyle}>Est. Total Points at TGE: {(totalPoints / 1_000_000).toFixed(1)}M</div>
-      <div style={sliderWrap}>
-        <input
-          type="range"
-          min={5_000_000}
-          max={15_000_000}
-          step={500_000}
-          value={totalPoints}
-          onChange={(e) => setTotalPoints(Number(e.target.value))}
-          style={{ width: "100%", accentColor: t.accent }}
-        />
-        <div style={sliderLabel}>
-          <span>5M</span>
-          <span>15M</span>
+      {/* Total Points at TGE — derived from the confirmed schedule */}
+      <div style={labelStyle}>
+        Total Points at TGE: {(totalPoints / 1_000_000).toFixed(2)}M
+        <span style={{ marginLeft: 8, fontSize: "0.7rem", color: `${t.muted}cc`, fontWeight: 400 }}>
+          (derived, not a guess)
+        </span>
+      </div>
+      <div
+        style={{
+          fontFamily: fonts.mono || fonts.body,
+          fontSize: "0.78rem",
+          color: t.muted,
+          lineHeight: 1.7,
+          padding: "12px 16px",
+          borderRadius: 8,
+          border: `1px solid ${t.muted}22`,
+          background: `${t.bg}`,
+          marginBottom: 12,
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>Genesis (retroactive)</span>
+          <span style={{ color: t.text }}>3.00M</span>
         </div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>150K / wk × {programWeeks} wks</span>
+          <span style={{ color: t.text }}>{(weeklyTotal / 1_000_000).toFixed(2)}M</span>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span>Tournament pools</span>
+          <input
+            type="number"
+            value={tournamentPoints}
+            onChange={(e) => setTournamentPoints(Math.max(0, Number(e.target.value)))}
+            style={{
+              width: 90,
+              padding: "2px 8px",
+              borderRadius: 6,
+              border: `1px solid ${t.muted}44`,
+              background: "transparent",
+              color: t.text,
+              fontFamily: fonts.mono || fonts.body,
+              fontSize: "0.75rem",
+              textAlign: "right",
+              outline: "none",
+            }}
+            step={50000}
+            min={0}
+          />
+        </div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginTop: 6,
+            paddingTop: 6,
+            borderTop: `1px solid ${t.muted}22`,
+            color: t.accent,
+            fontWeight: 700,
+          }}
+        >
+          <span>= Total at TGE</span>
+          <span>{(totalPoints / 1_000_000).toFixed(2)}M</span>
+        </div>
+      </div>
+      <div style={{ fontSize: "0.72rem", color: `${t.text}66`, lineHeight: 1.5, marginBottom: 20 }}>
+        ~{weeksElapsed} of {programWeeks} weeks distributed so far. Live running
+        total:{" "}
+        <a
+          href="https://omni.variational.io/points"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: t.accent, textDecoration: "underline" }}
+        >
+          omni.variational.io/points
+        </a>
+        .
       </div>
 
       {/* Weekly Volume */}

@@ -102,12 +102,30 @@ export const MARKET_DATA = {
 };
 
 export const POINTS_DATA = {
-  weeklyPoints: 150000,
-  retroactivePoints: 3000000,
-  estimatedTotalAtTGE: 9500000,
+  weeklyPoints: 150000,          // confirmed: official weekly "Omni Points" graphic
+  retroactivePoints: 3000000,    // genesis: retroactive distribution at launch (docs)
+  tournamentPoints: 600000,      // est. cumulative tournament/competition pools (~150k each)
+  // Week-0 reference = the genesis activity cutoff (Dec 11, 2025). This makes
+  // getWeeksElapsed() line up with Variational's own "Week N" labels
+  // (Week 30 ≈ July 10, 2026 on the official graphics).
+  programStartDate: "2025-12-11",
   programEndDate: "2026-09-30",
   programEndLabel: "Q3 2026",
 };
+
+// Total weekly distribution rounds over the whole program (start → end).
+export function getProgramWeeks() {
+  const start = new Date(POINTS_DATA.programStartDate);
+  const end = new Date(POINTS_DATA.programEndDate);
+  return Math.max(0, Math.round((end - start) / (7 * 24 * 60 * 60 * 1000)));
+}
+
+// Weekly rounds distributed so far (≈ Variational's current "Week N").
+export function getWeeksElapsed() {
+  const start = new Date(POINTS_DATA.programStartDate);
+  const now = new Date();
+  return Math.max(0, Math.floor((now - start) / (7 * 24 * 60 * 60 * 1000)));
+}
 
 export function getWeeksRemaining() {
   const now = new Date();

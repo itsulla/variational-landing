@@ -30,11 +30,11 @@ export function CountdownBanner({ theme }) {
   const [remaining, setRemaining] = useState(() => computeRemaining());
 
   useEffect(() => {
-    if (!remaining) return undefined;
+    if (PROGRAM_END_MS <= Date.now()) return undefined;
     const tick = () => setRemaining(computeRemaining());
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [remaining === null]);
+  }, []);
 
   if (!remaining) return null;
 

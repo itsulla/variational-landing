@@ -4,6 +4,8 @@ import Footer from "../../components/Footer.jsx";
 import TrustStrip from "../../components/TrustStrip.jsx";
 import CopyCode from "../../components/CopyCode.jsx";
 import OnboardingBanner from "../../components/OnboardingBanner.jsx";
+import LiveDataStatus from "../../components/LiveDataStatus.jsx";
+import { liveStateFromPayload } from "../../lib/liveData.js";
 import {
   REFERRAL_LINK,
   REFERRAL_CODE,
@@ -106,26 +108,45 @@ const ORACLE_LABELS = {
 
 function PriceComparison() {
   const [data, setData] = useState(null);
+  const [liveState, setLiveState] = useState({ status: "live", meta: null, error: null });
 
   useEffect(() => {
     let cancelled = false;
-    const load = () =>
-      fetch(`${RATES_API_BASE}/api/preipo/prices`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => { if (!cancelled && d) setData(d); })
-        .catch(() => {});
+    const load = async () => {
+      try {
+        const response = await fetch(`${RATES_API_BASE}/api/preipo/prices`);
+        if (!response.ok) throw new Error("Price API unavailable");
+        const state = liveStateFromPayload(await response.json());
+        if (!cancelled) {
+          setData(state.data);
+          setLiveState({ status: state.status, meta: state.meta, error: null });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setLiveState({ status: "unavailable", meta: null, error: error.message });
+        }
+      }
+    };
     load();
     const id = setInterval(load, 60 * 1000);
     return () => { cancelled = true; clearInterval(id); };
   }, []);
-
-  if (!data) return null;
 
   const container = { maxWidth: 980, margin: "0 auto", padding: "0 24px" };
   const fmtPrice = (p) =>
     p >= 1000 ? `$${p.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : `$${p.toFixed(2)}`;
   const diffColor = (d) =>
     Math.abs(d) < 0.05 ? THEME.muted : d > 0 ? THEME.positive : "#f87171";
+
+  if (!data) {
+    return liveState.status === "unavailable" ? (
+      <section style={{ padding: "32px 0", background: THEME.bgAlt }}>
+        <div style={container}>
+          <LiveDataStatus {...liveState} />
+        </div>
+      </section>
+    ) : null;
+  }
 
   return (
     <section style={{ padding: "48px 0", background: THEME.bgAlt }}>
@@ -147,6 +168,7 @@ function PriceComparison() {
           Refreshed every minute, deviation shown against the cross-venue
           median. Persistent gaps are where the basis trades live.
         </p>
+        <LiveDataStatus {...liveState} style={{ marginBottom: 20 }} />
         <div
           style={{
             display: "grid",

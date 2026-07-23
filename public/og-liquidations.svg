@@ -62,12 +62,12 @@
   </g>
   <!-- Label: tool badge -->
   <rect x="80" y="50" rx="4" ry="4" width="200" height="28" fill="#00FF4118" stroke="#00FF4144" stroke-width="1"/>
-  <text x="180" y="70" text-anchor="middle" font-family="monospace" font-size="13" font-weight="600" fill="#00FF41" letter-spacing="0.08em">LIQUIDATION TRACKER</text>
+  <text x="180" y="70" text-anchor="middle" font-family="monospace" font-size="13" font-weight="600" fill="#00FF41" letter-spacing="0.08em">HYPERLIQUID RISK TOOL</text>
   <!-- Title -->
-  <text x="80" y="130" font-family="system-ui, sans-serif" font-size="48" font-weight="700" fill="#e0e0e0">Live Crypto Liquidations</text>
-  <text x="80" y="185" font-family="system-ui, sans-serif" font-size="48" font-weight="700" fill="#e0e0e0">Heatmap &amp; Monitor</text>
+  <text x="80" y="130" font-family="system-ui, sans-serif" font-size="48" font-weight="700" fill="#e0e0e0">Liquidation Price</text>
+  <text x="80" y="185" font-family="system-ui, sans-serif" font-size="48" font-weight="700" fill="#e0e0e0">Level Estimator</text>
   <!-- Subtitle -->
-  <text x="80" y="230" font-family="system-ui, sans-serif" font-size="20" fill="#00FF4188">Track real-time liquidation events across major perpetual exchanges.</text>
+  <text x="80" y="230" font-family="system-ui, sans-serif" font-size="20" fill="#00FF4188">Live Hyperliquid marks. Clearly labeled theoretical liquidation levels.</text>
   <!-- Legend -->
   <rect x="80" y="555" width="14" height="14" rx="2" fill="#ef444488"/>
   <text x="102" y="567" font-family="monospace" font-size="12" fill="#00FF4166">High liq. density</text>

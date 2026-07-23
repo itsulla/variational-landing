@@ -16,11 +16,37 @@ import {
 } from "../../config.js";
 import TrustStrip from "../../components/TrustStrip.jsx";
 import { CountdownBanner } from "../../components/Footer.jsx";
+import LiveDataStatus from "../../components/LiveDataStatus.jsx";
+import { liveStateFromPayload } from "../../lib/liveData.js";
 
 const WINDOW_OPTIONS = [
   { key: "ytd", label: "Year to date" },
   { key: "launch", label: "Since Variational launch" },
   { key: "all", label: "All-time" },
+];
+
+const STATIC_PROTOCOL_FALLBACK = [
+  {
+    name: "Variational",
+    slug: "variational",
+    architecture: "Off-chain OLP RFQ execution with on-chain settlement",
+    fee_model: "0% trading fees",
+    fees_note: "Live metrics unavailable",
+  },
+  {
+    name: "Hyperliquid",
+    slug: "hyperliquid",
+    architecture: "Purpose-built on-chain order book",
+    fee_model: "Maker/taker schedule",
+    fees_note: "Live metrics unavailable",
+  },
+  {
+    name: "Lighter",
+    slug: "lighter",
+    architecture: "ZK rollup order book",
+    fee_model: "Tiered fee schedule",
+    fees_note: "Live metrics unavailable",
+  },
 ];
 
 /* ─── Theme tokens ────────────────────────────────────────────────── */
@@ -133,6 +159,7 @@ function useThreeWayData(windowKey) {
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [lastAttempt, setLastAttempt] = useState(null);
+  const [liveState, setLiveState] = useState({ status: "live", meta: null });
 
   useEffect(() => {
     let cancelled = false;
@@ -149,15 +176,24 @@ function useThreeWayData(windowKey) {
           `${RATES_API_BASE}/api/compare/three?window=${windowKey}`
         );
         if (!res.ok) throw new Error("API error");
-        const data = await res.json();
+        const payload = await res.json();
         if (!cancelled) {
+          const state = liveStateFromPayload(payload);
+          const data = state.data;
           setProtocols(data.protocols || []);
           setWindowMeta(data.window || null);
-          setLastUpdated(data.last_updated || attemptTime);
+          setLastUpdated(state.meta?.generatedAt || data.last_updated || attemptTime);
+          setLiveState({ status: state.status, meta: state.meta });
           setError(null);
         }
       } catch (err) {
-        if (!cancelled) setError(err.message);
+        if (!cancelled) {
+          const windowLabel = WINDOW_OPTIONS.find((option) => option.key === windowKey)?.label;
+          setProtocols(STATIC_PROTOCOL_FALLBACK);
+          setWindowMeta({ key: windowKey, label: windowLabel || "Selected window" });
+          setLiveState({ status: "fallback", meta: null, error: err.message });
+          setError(err.message);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -171,7 +207,15 @@ function useThreeWayData(windowKey) {
     };
   }, [windowKey]);
 
-  return { protocols, windowMeta, loading, error, lastUpdated, lastAttempt };
+  return {
+    protocols,
+    windowMeta,
+    loading,
+    error,
+    lastUpdated,
+    lastAttempt,
+    ...liveState,
+  };
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -207,16 +251,17 @@ function HeaderBar({ lastUpdated }) {
 
   return (
     <div style={bar}>
-      <span
+      <h1
         style={{
           color: THEME.accent,
           fontWeight: 700,
           letterSpacing: "0.1em",
           fontSize: "0.85rem",
+          margin: 0,
         }}
       >
         PERP DEX COMPARE
-      </span>
+      </h1>
       <div
         style={{
           display: "flex",
@@ -774,6 +819,35 @@ function ThreeWayTable({ protocols, windowMeta }) {
 /* ═══════════════════════════════════════════════════════════════════════
    VOLUME CHART
    ═══════════════════════════════════════════════════════════════════════ */
+function VolumeTooltip({ active, payload }) {
+  if (!active || !payload || !payload.length) return null;
+  const data = payload[0].payload;
+  return (
+    <div
+      style={{
+        background: THEME.cardBg,
+        border: `1px solid ${THEME.borderColor}`,
+        padding: "10px 14px",
+        fontFamily: FONTS.mono,
+        fontSize: "0.78rem",
+      }}
+    >
+      <div
+        style={{
+          fontWeight: 600,
+          color: data.isVariational ? THEME.accent : THEME.text,
+          marginBottom: 4,
+        }}
+      >
+        {data.name}
+      </div>
+      <div style={{ color: THEME.muted }}>
+        24h Volume: {formatNumber(data.volume)}
+      </div>
+    </div>
+  );
+}
+
 function VolumeChart({ protocols }) {
   const chartData = useMemo(() => {
     return [...protocols]
@@ -789,34 +863,6 @@ function VolumeChart({ protocols }) {
 
   const chartHeight = Math.max(300, chartData.length * 40);
 
-  function CustomTooltip({ active, payload }) {
-    if (!active || !payload || !payload.length) return null;
-    const d = payload[0].payload;
-    return (
-      <div
-        style={{
-          background: THEME.cardBg,
-          border: `1px solid ${THEME.borderColor}`,
-          padding: "10px 14px",
-          fontFamily: FONTS.mono,
-          fontSize: "0.78rem",
-        }}
-      >
-        <div
-          style={{
-            fontWeight: 600,
-            color: d.isVariational ? THEME.accent : THEME.text,
-            marginBottom: 4,
-          }}
-        >
-          {d.name}
-        </div>
-        <div style={{ color: THEME.muted }}>
-          24h Volume: {formatNumber(d.volume)}
-        </div>
-      </div>
-    );
-  }
 
   if (chartData.length === 0) return null;
 
@@ -874,7 +920,7 @@ function VolumeChart({ protocols }) {
                 tickLine={false}
               />
               <Tooltip
-                content={<CustomTooltip />}
+                content={<VolumeTooltip />}
                 cursor={{ fill: `${THEME.text}08` }}
               />
               <Bar dataKey="volume" radius={[0, 3, 3, 0]} maxBarSize={28}>
@@ -1164,7 +1210,16 @@ function CompareFooter() {
 export default function CompareTheme() {
   const [ready, setReady] = useState(false);
   const [windowKey, setWindowKey] = useState("ytd");
-  const { protocols, windowMeta, loading, error, lastUpdated, lastAttempt } =
+  const {
+    protocols,
+    windowMeta,
+    loading,
+    error,
+    lastUpdated,
+    lastAttempt,
+    status,
+    meta,
+  } =
     useThreeWayData(windowKey);
 
   useEffect(() => {
@@ -1194,6 +1249,9 @@ export default function CompareTheme() {
   return (
     <div style={pageWrap}>
       <HeaderBar lastUpdated={lastUpdated} />
+      <div style={{ ...container, paddingTop: 14 }}>
+        <LiveDataStatus status={status} meta={meta} />
+      </div>
       <WindowFilter
         value={windowKey}
         onChange={setWindowKey}

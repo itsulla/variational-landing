@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import Footer from "../../components/Footer.jsx";
+import LiveDataStatus from "../../components/LiveDataStatus.jsx";
+import { fallbackLiveState, liveStateFromPayload } from "../../lib/liveData.js";
 import {
   REFERRAL_LINK,
   REFERRAL_CODE,
@@ -113,7 +115,7 @@ function injectGlobalStyles() {
 function useRatesData() {
   const [data, setData] = useState({ opportunities: MOCK_OPPORTUNITIES, summary: MOCK_SUMMARY });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [liveState, setLiveState] = useState({ status: "fallback", meta: null, error: null });
 
   useEffect(() => {
     let cancelled = false;
@@ -127,13 +129,28 @@ function useRatesData() {
         const oppData = await oppRes.json();
         const summary = await sumRes.json();
         if (!cancelled) {
-          setData({ opportunities: oppData.opportunities || oppData, summary });
-          setError(null);
+          const opportunitiesState = liveStateFromPayload(oppData);
+          const summaryState = liveStateFromPayload(summary);
+          const status = opportunitiesState.status === "stale" || summaryState.status === "stale"
+            ? "stale"
+            : opportunitiesState.status === "degraded" || summaryState.status === "degraded"
+              ? "degraded"
+              : "live";
+          setData({
+            opportunities: opportunitiesState.data.opportunities || opportunitiesState.data,
+            summary: summaryState.data,
+          });
+          setLiveState({ status, meta: opportunitiesState.meta, error: null });
         }
       } catch (err) {
         if (!cancelled) {
           setData({ opportunities: MOCK_OPPORTUNITIES, summary: MOCK_SUMMARY });
-          setError(err.message);
+          const fallback = fallbackLiveState(null, err);
+          setLiveState({
+            status: fallback.status,
+            meta: fallback.meta,
+            error: fallback.error,
+          });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -144,7 +161,7 @@ function useRatesData() {
     return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
-  return { data, loading, error };
+  return { ...liveState, data, loading };
 }
 
 function useHistoricalRates(ticker) {
@@ -668,7 +685,7 @@ function MiniHistoryChart({ ticker }) {
       yTicks.push({ val, y });
     }
     return { paths, yTicks };
-  }, [series]);
+  }, [series, PAD.left, PAD.top, plotH, plotW]);
 
   if (loading || !chartData) {
     return (<div style={{ height: H, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONTS.mono, fontSize: "0.65rem", color: THEME.muted }}>LOADING...</div>);
@@ -1445,6 +1462,7 @@ function HistoricalChart({ opportunities }) {
     [opportunities]
   );
   const [selectedTicker, setSelectedTicker] = useState(topTickers[0] || "BTC");
+  const [chartNow] = useState(Date.now);
   const { series, loading } = useHistoricalRates(selectedTicker);
 
   const W = 800;
@@ -1502,14 +1520,14 @@ function HistoricalChart({ opportunities }) {
     // X axis labels (7 days)
     const xLabels = [];
     for (let d = 0; d < 7; d++) {
-      const date = new Date(Date.now() - (6 - d) * 24 * 3600000);
+      const date = new Date(chartNow - (6 - d) * 24 * 3600000);
       const label = `${date.getDate()} ${["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"][date.getMonth()]}`;
       const x = PAD.left + (d / 6) * plotW;
       xLabels.push({ label, x });
     }
 
     return { paths, yTicks, xLabels };
-  }, [series]);
+  }, [chartNow, series, PAD.left, PAD.top, plotH, plotW]);
 
   const btnStyle = (active) => ({
     fontFamily: FONTS.mono,
@@ -2083,7 +2101,7 @@ function TradfiTable() {
 
 export default function RatesTheme() {
   const [ready, setReady] = useState(false);
-  const { data, loading } = useRatesData();
+  const { data, loading, status, meta, error } = useRatesData();
 
   useEffect(() => {
     injectGlobalStyles();
@@ -2115,6 +2133,9 @@ export default function RatesTheme() {
   return (
     <div style={pageWrap}>
       <TopBar />
+      <div style={{ ...container, paddingTop: 14 }}>
+        <LiveDataStatus status={status} meta={meta} error={error} />
+      </div>
       <TickerBanner opportunities={opportunities} />
       <SummaryStats summary={summary} />
       <Hero />

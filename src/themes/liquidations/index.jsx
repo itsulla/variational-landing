@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Footer from "../../components/Footer.jsx";
+import LiveDataStatus from "../../components/LiveDataStatus.jsx";
+import { fallbackLiveState, liveStateFromPayload } from "../../lib/liveData.js";
 import { REFERRAL_LINK, REFERRAL_CODE, RATES_API_BASE } from "../../config.js";
 
 /* ── Theme tokens ─────────────────────────────────────────── */
@@ -187,7 +189,7 @@ function formatTimestamp(isoString) {
 function useAssetLevels(coin) {
   const [data, setData] = useState(() => buildMockAssetLevels(coin));
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [liveState, setLiveState] = useState({ status: "fallback", meta: null, error: null });
 
   useEffect(() => {
     let cancelled = false;
@@ -198,18 +200,20 @@ function useAssetLevels(coin) {
           `${RATES_API_BASE}/api/liquidations/levels?coin=${coin}`
         );
         if (!res.ok) throw new Error("API error");
-        const json = await res.json();
+        const payload = await res.json();
         if (!cancelled) {
+          const state = liveStateFromPayload(payload);
           setData({
-            ...json,
-            levels: normalizeLevels(json.levels),
+            ...state.data,
+            levels: normalizeLevels(state.data.levels),
           });
-          setError(null);
+          setLiveState({ status: state.status, meta: state.meta, error: null });
         }
       } catch (err) {
         if (!cancelled) {
           setData(buildMockAssetLevels(coin));
-          setError(err.message);
+          const fallback = fallbackLiveState(null, err);
+          setLiveState({ status: fallback.status, meta: null, error: fallback.error });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -224,13 +228,13 @@ function useAssetLevels(coin) {
     };
   }, [coin]);
 
-  return { data, loading, error };
+  return { data, loading, ...liveState };
 }
 
 function useAllAssets() {
   const [data, setData] = useState(() => buildMockAllAssets());
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [liveState, setLiveState] = useState({ status: "fallback", meta: null, error: null });
 
   useEffect(() => {
     let cancelled = false;
@@ -239,15 +243,17 @@ function useAllAssets() {
       try {
         const res = await fetch(`${RATES_API_BASE}/api/liquidations/assets`);
         if (!res.ok) throw new Error("API error");
-        const json = await res.json();
+        const payload = await res.json();
         if (!cancelled) {
-          setData(json);
-          setError(null);
+          const state = liveStateFromPayload(payload);
+          setData(state.data);
+          setLiveState({ status: state.status, meta: state.meta, error: null });
         }
       } catch (err) {
         if (!cancelled) {
           setData(buildMockAllAssets());
-          setError(err.message);
+          const fallback = fallbackLiveState(null, err);
+          setLiveState({ status: fallback.status, meta: null, error: fallback.error });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -262,7 +268,7 @@ function useAllAssets() {
     };
   }, []);
 
-  return { data, loading, error };
+  return { data, loading, ...liveState };
 }
 
 /* ── Countdown hook ───────────────────────────────────────── */
@@ -806,7 +812,7 @@ function ResponsiveGauge({ levels, markPrice }) {
 }
 
 /* ── Data table for selected asset ────────────────────────── */
-function LeverageTable({ levels, markPrice }) {
+function LeverageTable({ levels }) {
   if (!levels || levels.length === 0) return null;
 
   const sorted = [...levels].sort((a, b) => b.leverage - a.leverage);
@@ -1225,9 +1231,28 @@ function MarketingCallout() {
    ================================================================ */
 export default function LiquidationsTheme() {
   const [selectedCoin, setSelectedCoin] = useState("BTC");
-  const { data: assetData, loading: assetLoading } = useAssetLevels(selectedCoin);
-  const { data: allAssetsData, loading: allLoading } = useAllAssets();
+  const {
+    data: assetData,
+    loading: assetLoading,
+    status: assetStatus,
+    meta: assetMeta,
+    error: assetError,
+  } = useAssetLevels(selectedCoin);
+  const {
+    data: allAssetsData,
+    loading: allLoading,
+    status: allStatus,
+    error: allError,
+  } = useAllAssets();
   const countdown = useCountdown(60000);
+
+  const dataStatus = [assetStatus, allStatus].includes("fallback")
+    ? "fallback"
+    : [assetStatus, allStatus].includes("stale")
+      ? "stale"
+      : [assetStatus, allStatus].includes("degraded")
+        ? "degraded"
+        : "live";
 
   useEffect(() => {
     injectKeyframes();
@@ -1293,7 +1318,7 @@ export default function LiquidationsTheme() {
               lineHeight: 1.3,
             }}
           >
-            HYPERLIQUID LIQUIDATION MONITOR
+            HYPERLIQUID LIQUIDATION LEVEL ESTIMATOR
             <BlinkingCursor />
           </h1>
 
@@ -1329,6 +1354,14 @@ export default function LiquidationsTheme() {
               </>
             )}
           </div>
+          {!assetLoading && !allLoading && (
+            <LiveDataStatus
+              status={dataStatus}
+              meta={assetMeta}
+              error={assetError || allError}
+              style={{ marginTop: 14 }}
+            />
+          )}
         </div>
       </header>
 
@@ -1396,8 +1429,9 @@ export default function LiquidationsTheme() {
             margin: "0 auto",
           }}
         >
-          Data from Hyperliquid public API. Liquidation estimates based on
-          standard margin calculations. Updated every 5 minutes. Not financial
+          Marks from Hyperliquid's public API. These are theoretical liquidation
+          level estimates based on a simplified maintenance-margin model, not
+          observed liquidation events or account-specific risk. Updated every minute. Not financial
           advice. This page contains a referral link &mdash; the author may earn
           points from referred trading volume.
         </div>

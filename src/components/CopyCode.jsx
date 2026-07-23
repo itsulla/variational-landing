@@ -16,8 +16,11 @@ export default function CopyCode({ code, theme, fonts, style = {} }) {
   const [copied, setCopied] = useState(false);
   const [contact, setContact] = useState("");
   const [waitlisted, setWaitlisted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
-  const exhausted = Boolean(window.__REF_POOL__?.pool_exhausted);
+  const exhausted = typeof window !== "undefined"
+    && Boolean(window.__REF_POOL__?.pool_exhausted);
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(code).then(() => {
@@ -34,25 +37,43 @@ export default function CopyCode({ code, theme, fonts, style = {} }) {
     /* Reddit Pixel conversion: a code copy is our primary on-site
      * conversion (the actual signup happens on Variational's domain
      * where we can't see it). Lets Reddit Ads optimize toward copiers. */
-    if (typeof window.rdt === "function") {
+    if (typeof window !== "undefined" && typeof window.rdt === "function") {
       window.rdt("track", "Lead");
     }
   }, [code]);
 
   const submitWaitlist = useCallback(
-    (e) => {
+    async (e) => {
       e.preventDefault();
       const value = contact.trim();
-      if (value.length < 5) return;
-      fetch(`${RATES_API_BASE}/api/ref/waitlist`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ contact: value }),
-      }).catch(() => {});
-      if (typeof window.rdt === "function") {
-        window.rdt("track", "Custom", { customEventName: "WaitlistJoin" });
+      const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
+      const validTelegram = /^@[A-Za-z0-9_]{5,32}$/.test(value);
+      if (!validEmail && !validTelegram) {
+        setSubmitError("Enter a valid email or @telegram handle.");
+        return;
       }
-      setWaitlisted(true);
+
+      setSubmitting(true);
+      setSubmitError(null);
+      try {
+        const response = await fetch(`${RATES_API_BASE}/api/ref/waitlist`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ contact: value }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error || "Could not join the waitlist. Please try again.");
+        }
+        if (typeof window !== "undefined" && typeof window.rdt === "function") {
+          window.rdt("track", "Custom", { customEventName: "WaitlistJoin" });
+        }
+        setWaitlisted(true);
+      } catch (error) {
+        setSubmitError(error.message);
+      } finally {
+        setSubmitting(false);
+      }
     },
     [contact]
   );
@@ -90,41 +111,59 @@ export default function CopyCode({ code, theme, fonts, style = {} }) {
             ✓ You're on the list — we'll reach out when a slot opens.
           </div>
         ) : (
-          <form onSubmit={submitWaitlist} style={{ display: "flex", gap: 8 }}>
-            <input
-              type="text"
-              value={contact}
-              onChange={(e) => setContact(e.target.value)}
-              placeholder="email or @telegram"
-              style={{
-                flex: 1,
-                padding: "11px 14px",
-                borderRadius: 8,
-                border: `1px solid ${theme.accent}33`,
-                background: "transparent",
-                color: theme.text || "#fff",
-                fontFamily: fonts?.body || "system-ui",
-                fontSize: "0.85rem",
-                outline: "none",
-              }}
-            />
-            <button
-              type="submit"
-              style={{
-                padding: "11px 18px",
-                borderRadius: 8,
-                border: "none",
-                background: theme.accent,
-                color: theme.bg || "#000",
-                fontFamily: fonts?.body || "system-ui",
-                fontWeight: 700,
-                fontSize: "0.85rem",
-                cursor: "pointer",
-              }}
-            >
-              Notify me
-            </button>
-          </form>
+          <>
+            <form onSubmit={submitWaitlist} style={{ display: "flex", gap: 8 }}>
+              <input
+                type="text"
+                value={contact}
+                onChange={(e) => setContact(e.target.value)}
+                placeholder="email or @telegram"
+                aria-invalid={Boolean(submitError)}
+                style={{
+                  flex: 1,
+                  padding: "11px 14px",
+                  borderRadius: 8,
+                  border: `1px solid ${submitError ? "#ef4444" : `${theme.accent}33`}`,
+                  background: "transparent",
+                  color: theme.text || "#fff",
+                  fontFamily: fonts?.body || "system-ui",
+                  fontSize: "0.85rem",
+                  outline: "none",
+                }}
+              />
+              <button
+                type="submit"
+                disabled={submitting}
+                style={{
+                  padding: "11px 18px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: theme.accent,
+                  color: theme.bg || "#000",
+                  fontFamily: fonts?.body || "system-ui",
+                  fontWeight: 700,
+                  fontSize: "0.85rem",
+                  cursor: submitting ? "wait" : "pointer",
+                  opacity: submitting ? 0.65 : 1,
+                }}
+              >
+                {submitting ? "Joining…" : "Notify me"}
+              </button>
+            </form>
+            {submitError && (
+              <div
+                role="alert"
+                style={{
+                  marginTop: 8,
+                  color: "#ef4444",
+                  fontFamily: fonts?.body || "system-ui",
+                  fontSize: "0.78rem",
+                }}
+              >
+                {submitError}
+              </div>
+            )}
+          </>
         )}
       </div>
     );

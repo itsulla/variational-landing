@@ -9,6 +9,9 @@ import ToolButtons from "../../components/ToolButtons.jsx";
 import SocialProof from "../../components/SocialProof.jsx";
 import AnimatedCounter from "../../components/AnimatedCounter.jsx";
 import OnboardingBanner from "../../components/OnboardingBanner.jsx";
+import LiveDataStatus from "../../components/LiveDataStatus.jsx";
+import { buildHomepageStats } from "../../lib/marketStats.js";
+import { fallbackLiveState, liveStateFromPayload } from "../../lib/liveData.js";
 import {
   REFERRAL_LINK,
   REFERRAL_CODE,
@@ -157,15 +160,6 @@ const STEPS = [
   },
 ];
 
-/* ---------- Stats helpers ---------- */
-
-function formatVolume(n) {
-  if (n >= 1e12) return { value: +(n / 1e12).toFixed(1), suffix: "T+" };
-  if (n >= 1e9) return { value: +(n / 1e9).toFixed(0), suffix: "B+" };
-  if (n >= 1e6) return { value: +(n / 1e6).toFixed(0), suffix: "M+" };
-  return { value: Math.round(n), suffix: "" };
-}
-
 /* ---------- Sticky conversion bar ----------
  * Slides up once the user scrolls past the hero so the primary
  * action (claim access code → open Variational) is always reachable
@@ -238,12 +232,17 @@ export default function OriginalTheme() {
 
   /* Live Variational stats via our /api/compare/three endpoint */
   const [liveStats, setLiveStats] = useState(null);
+  const [statsState, setStatsState] = useState(() =>
+    fallbackLiveState(null, "Waiting for live market statistics")
+  );
   useEffect(() => {
     async function fetchStats() {
       try {
         const res = await fetch(`${RATES_API_BASE}/api/compare/three?window=ytd`);
-        if (!res.ok) return;
-        const data = await res.json();
+        if (!res.ok) throw new Error("Live market statistics are unavailable");
+        const payload = await res.json();
+        const state = liveStateFromPayload(payload);
+        const data = state.data;
         const variational = (data.protocols || []).find(
           (p) => p.slug === "variational"
         );
@@ -251,30 +250,27 @@ export default function OriginalTheme() {
           (s, p) => s + (p.volume_24h || 0),
           0
         );
-        if (variational) {
-          setLiveStats({
-            cumVol: variational.cumulative_volume,
-            vol24h: variational.volume_24h,
-            markets: variational.markets_count,
-            marketShare:
-              total24h > 0
-                ? (variational.volume_24h / total24h) * 100
-                : null,
-          });
-        }
-      } catch (_e) {
-        /* fallback to static */
+        if (!variational) throw new Error("Variational statistics are missing");
+        setLiveStats({
+          cumVol: variational.cumulative_volume,
+          vol24h: variational.volume_24h,
+          markets: variational.markets_count,
+          marketShare:
+            total24h > 0
+              ? (variational.volume_24h / total24h) * 100
+              : null,
+        });
+        setStatsState(state);
+      } catch (error) {
+        setLiveStats(null);
+        setStatsState(fallbackLiveState(null, error));
       }
     }
     fetchStats();
   }, []);
 
-  /* Build stats array — live if available, static fallback */
-  const cumVol = liveStats?.cumVol;
-  const cumVolFmt = cumVol ? formatVolume(cumVol) : { value: 175, suffix: "B+" };
-  const vol24hFmt = liveStats?.vol24h
-    ? formatVolume(liveStats.vol24h)
-    : { value: 700, suffix: "M+" };
+  /* Build stats array — live if available, current documented fallback otherwise. */
+  const stats = buildHomepageStats(liveStats);
 
   return (
     <div
@@ -376,24 +372,23 @@ export default function OriginalTheme() {
           <ToolButtons theme={THEME} fonts={FONTS} layout="row" />
         </div>
 
+        <div style={{ marginTop: 48, display: "flex", justifyContent: "center" }}>
+          <LiveDataStatus {...statsState} />
+        </div>
+
         {/* Stats bar — animated counters with live data */}
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
             gap: 24,
-            marginTop: 56,
+            marginTop: 12,
             padding: "28px 0",
             borderTop: `1px solid ${THEME.muted}22`,
             borderBottom: `1px solid ${THEME.muted}22`,
           }}
         >
-          {[
-            { prefix: "$", value: cumVolFmt.value, suffix: cumVolFmt.suffix, label: "Cumulative Volume" },
-            { prefix: "$", value: vol24hFmt.value, suffix: vol24hFmt.suffix, label: "24h Volume" },
-            { prefix: "", value: 495, suffix: "+", label: "Markets" },
-            { prefix: "$", value: 50, suffix: "M", label: "Series A (May 2026)" },
-          ].map((s) => (
+          {stats.map((s) => (
             <div key={s.label} style={{ textAlign: "center" }}>
               <AnimatedCounter
                 value={s.value}

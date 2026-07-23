@@ -140,25 +140,25 @@ const PAGE_META = {
   },
   "/liquidations": {
     title:
-      "Crypto Liquidations Tracker | Live Liquidation Data | Variational",
+      "Hyperliquid Liquidation Level Estimator | Variational",
     description:
-      "Track real-time crypto liquidations across major exchanges. Monitor liquidation events, heatmaps, and market sentiment.",
+      "Estimate theoretical long and short liquidation levels for Hyperliquid markets using live mark prices and configurable leverage bands.",
     og: {
-      title: "Crypto Liquidations Tracker | Variational",
+      title: "Hyperliquid Liquidation Level Estimator | Variational",
       description:
-        "Real-time crypto liquidation data and heatmaps across major perpetual exchanges.",
+        "Live Hyperliquid marks with clearly labeled theoretical liquidation level estimates.",
       image: `${SITE_URL}/og-liquidations.svg`,
     },
     twitter: {
-      title: "Crypto Liquidations Tracker | Variational",
+      title: "Hyperliquid Liquidation Level Estimator | Variational",
       description:
-        "Real-time crypto liquidation data and heatmaps across major perpetual exchanges.",
+        "Live Hyperliquid marks with clearly labeled theoretical liquidation level estimates.",
     },
     jsonLd: {
       "@type": "WebApplication",
-      name: "Variational Crypto Liquidations Tracker",
+      name: "Variational Hyperliquid Liquidation Level Estimator",
       description:
-        "Real-time liquidation monitoring and heatmap visualization across major perpetual exchanges.",
+        "Theoretical liquidation level estimates derived from live Hyperliquid marks and simplified leverage assumptions.",
       url: `${SITE_URL}/liquidations`,
       applicationCategory: "FinanceApplication",
       operatingSystem: "Web",
@@ -669,7 +669,8 @@ let firstPageVisit = true;
 
 export default function PageMeta({ path }) {
   useEffect(() => {
-    const meta = PAGE_META[path] || PAGE_META["/"];
+    const normalizedPath = path === "/" ? path : path.replace(/\/+$/, "");
+    const meta = PAGE_META[normalizedPath] || PAGE_META["/"];
 
     /* Reddit Pixel: index.html fires PageVisit for the initial load;
      * re-fire here on SPA route CHANGES only (skip first mount to
@@ -691,7 +692,7 @@ export default function PageMeta({ path }) {
     if (canonicalTag) {
       canonicalTag.setAttribute(
         "href",
-        `${SITE_URL}${path === "/" ? "" : path}`
+        `${SITE_URL}${normalizedPath === "/" ? "" : normalizedPath}`
       );
     }
 
@@ -699,7 +700,11 @@ export default function PageMeta({ path }) {
     setMetaTag("property", "og:title", meta.og.title);
     setMetaTag("property", "og:description", meta.og.description);
     setMetaTag("property", "og:image", meta.og.image);
-    setMetaTag("property", "og:url", `${SITE_URL}${path === "/" ? "" : path}`);
+    setMetaTag(
+      "property",
+      "og:url",
+      `${SITE_URL}${normalizedPath === "/" ? "" : normalizedPath}`
+    );
     setMetaTag("property", "og:type", "website");
 
     /* Twitter Card */

@@ -113,7 +113,7 @@ function useCountUp(target, duration = 1500, trigger = false) {
 }
 
 /* ── IntersectionObserver hook ────────────────────────────── */
-function useInView(options = {}) {
+function useInView() {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
 
@@ -127,7 +127,7 @@ function useInView(options = {}) {
           observer.disconnect();
         }
       },
-      { threshold: 0.3, ...options }
+      { threshold: 0.3 }
     );
     observer.observe(el);
     return () => observer.disconnect();

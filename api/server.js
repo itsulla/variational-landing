@@ -1,7 +1,17 @@
 import express from "express";
 import { loadEnvFile } from "node:process";
-import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
+import { appendFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { createCachedRoute } from "./lib/cache.js";
+import {
+  atomicWriteJson,
+  createRateLimiter,
+  currentRefCode,
+  normalizeReferralCode,
+  refStatus,
+  validateWaitlistContact,
+} from "./lib/referral.js";
 
 // Load API keys / secrets from .env (chmod 600). Soft-fail if absent so
 // the server still boots in environments without an env file — endpoints
@@ -18,8 +28,9 @@ const LT_PROXY_URL = process.env.LT_PROXY_URL || "";
 const LT_PROXY_SECRET = process.env.LT_PROXY_SECRET || "";
 
 const app = express();
+app.set("trust proxy", "loopback");
 app.use(express.json({ limit: "16kb" }));
-const PORT = 8002;
+const PORT = Number.parseInt(process.env.PORT || "8002", 10);
 
 // ═══════════════════════════════════════════════════════════════
 //  REFERRAL CODE POOL — rotation, tracking, waitlist
@@ -45,19 +56,24 @@ function loadRefPool() {
   }
 }
 
-function saveRefPool(pool) {
-  writeFileSync(REF_POOL_PATH, JSON.stringify(pool, null, 2) + "\n");
+let refMutationQueue = Promise.resolve();
+function mutateRefPool(task) {
+  const run = refMutationQueue.then(task, task);
+  refMutationQueue = run.catch(() => {});
+  return run;
 }
 
-function currentRefCode(pool) {
-  return pool.codes.find((c) => c.active && c.signups < c.maxSlots) || null;
-}
+const trackLimiter = createRateLimiter({ windowMs: 60_000, max: 30 });
+const waitlistLimiter = createRateLimiter({ windowMs: 60 * 60_000, max: 5 });
+const adminLimiter = createRateLimiter({ windowMs: 15 * 60_000, max: 10 });
 
-function refStatus(pool) {
-  const remaining = pool.codes
-    .filter((c) => c.active)
-    .reduce((s, c) => s + Math.max(0, c.maxSlots - c.signups), 0);
-  return { slots_remaining: remaining, pool_exhausted: remaining === 0 };
+function allowMutation(limiter, req, res) {
+  const result = limiter.consume(req.ip || req.socket?.remoteAddress || "unknown");
+  res.set("X-RateLimit-Remaining", result.remaining);
+  if (result.allowed) return true;
+  res.set("Retry-After", result.retryAfterSec);
+  res.status(429).json({ error: "too many requests" });
+  return false;
 }
 
 // Current code for the frontend bootstrap. Never errors — an empty
@@ -83,30 +99,45 @@ app.get("/api/ref/status", (_req, res) => {
 });
 
 // Copy-click tracking — leading indicator for manual reconciliation.
-app.post("/api/ref/track", (req, res) => {
-  const code = String(req.body?.code || "").slice(0, 32);
-  if (code) {
-    const pool = loadRefPool();
-    const entry = pool.codes.find((c) => c.code === code);
-    if (entry) {
+app.post("/api/ref/track", async (req, res) => {
+  if (!allowMutation(trackLimiter, req, res)) return;
+  const code = normalizeReferralCode(req.body?.code);
+  if (!code) return res.status(400).json({ error: "valid code required" });
+
+  try {
+    const tracked = await mutateRefPool(async () => {
+      const pool = loadRefPool();
+      const entry = pool.codes.find((candidate) => candidate.code === code);
+      if (!entry) return false;
       entry.copies = (entry.copies || 0) + 1;
-      saveRefPool(pool);
-    }
+      await atomicWriteJson(REF_POOL_PATH, pool);
+      return true;
+    });
+    res.json({ ok: true, tracked });
+  } catch (error) {
+    console.error("[ref] track failed:", error.message);
+    res.status(500).json({ error: "tracking unavailable" });
   }
-  res.json({ ok: true });
 });
 
 // Waitlist capture for when the pool is exhausted. Append-only JSONL.
-app.post("/api/ref/waitlist", (req, res) => {
-  const contact = String(req.body?.contact || "").trim().slice(0, 200);
-  if (!contact || contact.length < 5) {
-    return res.status(400).json({ error: "contact required" });
+app.post("/api/ref/waitlist", async (req, res) => {
+  if (!allowMutation(waitlistLimiter, req, res)) return;
+  const validated = validateWaitlistContact(req.body?.contact);
+  if (!validated) {
+    return res.status(400).json({ error: "valid email or @telegram handle required" });
   }
-  appendFileSync(
-    WAITLIST_PATH,
-    JSON.stringify({ contact, ts: new Date().toISOString() }) + "\n"
-  );
-  res.json({ ok: true });
+  try {
+    await appendFile(
+      WAITLIST_PATH,
+      `${JSON.stringify({ ...validated, ts: new Date().toISOString() })}\n`,
+      { encoding: "utf8", mode: 0o600 }
+    );
+    res.status(201).json({ ok: true });
+  } catch (error) {
+    console.error("[ref] waitlist append failed:", error.message);
+    res.status(500).json({ error: "waitlist unavailable" });
+  }
 });
 
 // Admin: reconcile signup counts / toggle / add codes.
@@ -114,32 +145,78 @@ app.post("/api/ref/waitlist", (req, res) => {
 //     -H "content-type: application/json" -H "x-admin-secret: $SECRET" \
 //     -d '{"action":"set","code":"OMNI...","signups":5}'
 // Actions: set {code, signups?, maxSlots?, active?} | add {code, maxSlots} | list
-app.post("/api/ref/admin", (req, res) => {
+app.post("/api/ref/admin", async (req, res) => {
+  if (!allowMutation(adminLimiter, req, res)) return;
   if (!REF_ADMIN_SECRET || req.headers["x-admin-secret"] !== REF_ADMIN_SECRET) {
     return res.status(403).json({ error: "forbidden" });
   }
-  const pool = loadRefPool();
-  const { action, code } = req.body || {};
-  if (action === "list") return res.json(pool);
-  if (action === "add" && code) {
-    pool.codes.push({
-      code: String(code),
-      maxSlots: Number(req.body.maxSlots) || 1,
-      signups: 0,
-      copies: 0,
-      active: true,
+  const { action } = req.body || {};
+  const code = normalizeReferralCode(req.body?.code);
+  if (action === "list") return res.json(loadRefPool());
+
+  try {
+    const pool = await mutateRefPool(async () => {
+      const nextPool = loadRefPool();
+      if (action === "add" && code) {
+        if (nextPool.codes.some((entry) => entry.code === code)) {
+          const error = new Error("code already exists");
+          error.status = 409;
+          throw error;
+        }
+        const maxSlots = Number(req.body.maxSlots ?? 1);
+        if (!Number.isInteger(maxSlots) || maxSlots < 1 || maxSlots > 100_000) {
+          const error = new Error("maxSlots must be an integer from 1 to 100000");
+          error.status = 400;
+          throw error;
+        }
+        nextPool.codes.push({
+          code,
+          maxSlots,
+          signups: 0,
+          copies: 0,
+          active: true,
+        });
+      } else if (action === "set" && code) {
+        const entry = nextPool.codes.find((candidate) => candidate.code === code);
+        if (!entry) {
+          const error = new Error("unknown code");
+          error.status = 404;
+          throw error;
+        }
+        if (req.body.signups !== undefined) {
+          const signups = Number(req.body.signups);
+          if (!Number.isInteger(signups) || signups < 0 || signups > 100_000) {
+            const error = new Error("signups must be an integer from 0 to 100000");
+            error.status = 400;
+            throw error;
+          }
+          entry.signups = signups;
+        }
+        if (req.body.maxSlots !== undefined) {
+          const maxSlots = Number(req.body.maxSlots);
+          if (!Number.isInteger(maxSlots) || maxSlots < 1 || maxSlots > 100_000) {
+            const error = new Error("maxSlots must be an integer from 1 to 100000");
+            error.status = 400;
+            throw error;
+          }
+          entry.maxSlots = maxSlots;
+        }
+        if (req.body.active !== undefined) entry.active = Boolean(req.body.active);
+      } else {
+        const error = new Error("unknown action");
+        error.status = 400;
+        throw error;
+      }
+      await atomicWriteJson(REF_POOL_PATH, nextPool);
+      return nextPool;
     });
-  } else if (action === "set" && code) {
-    const entry = pool.codes.find((c) => c.code === code);
-    if (!entry) return res.status(404).json({ error: "unknown code" });
-    if (req.body.signups !== undefined) entry.signups = Number(req.body.signups);
-    if (req.body.maxSlots !== undefined) entry.maxSlots = Number(req.body.maxSlots);
-    if (req.body.active !== undefined) entry.active = Boolean(req.body.active);
-  } else {
-    return res.status(400).json({ error: "unknown action" });
+    res.json(pool);
+  } catch (error) {
+    if (!error.status) console.error("[ref] admin save failed:", error.message);
+    res.status(error.status || 500).json({
+      error: error.status ? error.message : "pool save failed",
+    });
   }
-  saveRefPool(pool);
-  res.json(pool);
 });
 
 // ─── Cache layer (stale-while-revalidate) ───────────────────────
@@ -152,45 +229,17 @@ app.post("/api/ref/admin", (req, res) => {
 // `inflight` guards against a thundering herd of background refreshes.
 const cache = {};
 const inflight = {};
-function cached(key, ttlMs, fetcher) {
-  const refresh = async () => {
-    if (inflight[key]) return inflight[key];
-    inflight[key] = (async () => {
-      try {
-        const data = await fetcher();
-        cache[key] = { data, ts: Date.now() };
-        return data;
-      } finally {
-        inflight[key] = null;
-      }
-    })();
-    return inflight[key];
-  };
-
-  return async (_req, res) => {
-    const now = Date.now();
-    const entry = cache[key];
-
-    // Fresh — serve immediately.
-    if (entry && now - entry.ts < ttlMs) {
-      return res.json(entry.data);
-    }
-
-    // Stale — serve stale now, revalidate in the background.
-    if (entry) {
-      refresh().catch((err) => console.error(`[${key}] bg refresh error:`, err.message));
-      return res.json(entry.data);
-    }
-
-    // Cold — nothing cached yet, must block on the first fetch.
-    try {
-      const data = await refresh();
-      res.json(data);
-    } catch (err) {
-      console.error(`[${key}] fetch error:`, err.message);
-      res.status(502).json({ error: err.message });
-    }
-  };
+function cached(key, ttlMs, fetcher, options = {}) {
+  return createCachedRoute({
+    key,
+    ttlMs,
+    maxStaleMs: options.maxStaleMs ?? ttlMs * 12,
+    fetcher,
+    source: options.source ?? key,
+    degraded: options.degraded ?? false,
+    cache,
+    inflight,
+  });
 }
 
 // ─── Helper: fetch JSON ─────────────────────────────────────────
@@ -768,17 +817,27 @@ async function buildTradfiOpportunities() {
 }
 
 // ─── /api/rates/opportunities ───────────────────────────────────
-app.get("/api/rates/opportunities", cached("rates_opp", 5 * 60 * 1000, async () => {
-  const opportunities = await buildOpportunities();
-  return { opportunities };
-}));
+app.get("/api/rates/opportunities", cached(
+  "rates_opp",
+  5 * 60 * 1000,
+  async () => ({ opportunities: await buildOpportunities() }),
+  {
+    source: "Variational + 13 reference venues",
+    degraded: (data) => data.opportunities.length < Math.min(10, TICKERS.length),
+  }
+));
 
 // ─── /api/rates/tradfi ──────────────────────────────────────────
 // Variational vs Hyperliquid HIP-3 funding for stocks/ETFs/commodities.
-app.get("/api/rates/tradfi", cached("rates_tradfi", 5 * 60 * 1000, async () => {
-  const opportunities = await buildTradfiOpportunities();
-  return { opportunities };
-}));
+app.get("/api/rates/tradfi", cached(
+  "rates_tradfi",
+  5 * 60 * 1000,
+  async () => ({ opportunities: await buildTradfiOpportunities() }),
+  {
+    source: "Variational + Hyperliquid HIP-3 xyz",
+    degraded: (data) => data.opportunities.length === 0,
+  }
+));
 
 // ─── /api/rates/summary ─────────────────────────────────────────
 app.get("/api/rates/summary", cached("rates_summary", 5 * 60 * 1000, async () => {
@@ -800,28 +859,33 @@ app.get("/api/rates/summary", cached("rates_summary", 5 * 60 * 1000, async () =>
     avg_spread_annual: Math.round(avgSpread * 100) / 100,
     updated_at: new Date().toISOString(),
   };
-}));
+}, { source: "Variational + normalized venue opportunities" }));
 
 // ─── /api/rates/history ─────────────────────────────────────────
 // Simulated history based on current live rates (no historical DB)
-app.get("/api/rates/history", async (req, res) => {
-  const ticker = (req.query.ticker || "BTC").toUpperCase();
-  const cacheKey = `history_${ticker}`;
-  const now = Date.now();
-
-  if (cache[cacheKey] && now - cache[cacheKey].ts < 30 * 60 * 1000) {
-    return res.json({ series: cache[cacheKey].data });
+const historyHandlers = new Map();
+app.get("/api/rates/history", (req, res) => {
+  const requested = String(req.query.ticker || "BTC").toUpperCase();
+  const ticker = TICKERS.includes(requested) ? requested : "BTC";
+  if (!historyHandlers.has(ticker)) {
+    historyHandlers.set(ticker, cached(
+      `history_${ticker}`,
+      30 * 60 * 1000,
+      async () => {
+        const opportunities = cache.rates_opp?.data?.opportunities
+          || await buildOpportunities();
+        const opportunity = opportunities.find((item) => item.ticker === ticker)
+          || opportunities[0];
+        if (!opportunity) throw new Error("no opportunity data available");
+        return { series: buildHistory(opportunity), simulated: true };
+      },
+      {
+        maxStaleMs: 24 * 60 * 60 * 1000,
+        source: "Illustrative simulation seeded from current live rates",
+      }
+    ));
   }
-
-  try {
-    const opps = cache["rates_opp"]?.data?.opportunities || await buildOpportunities();
-    const opp = opps.find((o) => o.ticker === ticker) || opps[0];
-    const series = buildHistory(opp);
-    cache[cacheKey] = { data: series, ts: now };
-    res.json({ series });
-  } catch (err) {
-    res.status(502).json({ error: err.message });
-  }
+  return historyHandlers.get(ticker)(req, res);
 });
 
 function buildHistory(opp) {
@@ -909,7 +973,7 @@ async function fetchDefiLlamaProtocols() {
 app.get("/api/compare/protocols", cached("compare_protocols", 30 * 60 * 1000, async () => {
   const protocols = await fetchDefiLlamaProtocols();
   return { protocols, last_updated: new Date().toISOString() };
-}));
+}, { source: "Variational + DefiLlama" }));
 
 app.get("/api/compare/summary", cached("compare_summary", 30 * 60 * 1000, async () => {
   const protocols = cache["compare_protocols"]?.data?.protocols || await fetchDefiLlamaProtocols();
@@ -922,7 +986,7 @@ app.get("/api/compare/summary", cached("compare_summary", 30 * 60 * 1000, async 
     total_volume_24h: totalVol24h,
     updated_at: new Date().toISOString(),
   };
-}));
+}, { source: "Variational + DefiLlama" }));
 
 // ═══════════════════════════════════════════════════════════════
 //  THREE-WAY COMPARE: Hyperliquid / Variational / Lighter
@@ -1116,25 +1180,27 @@ async function buildThreeWayCompare(window) {
   };
 }
 
-app.get("/api/compare/three", async (req, res) => {
-  const win = ["ytd", "launch", "all"].includes(req.query.window)
+const compareThreeHandlers = Object.fromEntries(
+  ["ytd", "launch", "all"].map((windowKey) => [
+    windowKey,
+    cached(
+      `compare_three_${windowKey}`,
+      30 * 60 * 1000,
+      () => buildThreeWayCompare(windowKey),
+      {
+        source: "Variational + Hyperliquid + Lighter + DefiLlama",
+        degraded: (data) => data.protocols.some(
+          (protocol) => protocol.volume_24h == null || protocol.markets_count == null
+        ),
+      }
+    ),
+  ])
+);
+app.get("/api/compare/three", (req, res) => {
+  const windowKey = ["ytd", "launch", "all"].includes(req.query.window)
     ? req.query.window
     : "ytd";
-  const key = `compare_three_${win}`;
-  const now = Date.now();
-  const ttl = 30 * 60 * 1000;
-  if (cache[key] && now - cache[key].ts < ttl) {
-    return res.json(cache[key].data);
-  }
-  try {
-    const data = await buildThreeWayCompare(win);
-    cache[key] = { data, ts: now };
-    res.json(data);
-  } catch (err) {
-    console.error(`[${key}] error:`, err.message);
-    if (cache[key]) return res.json(cache[key].data);
-    res.status(502).json({ error: err.message });
-  }
+  return compareThreeHandlers[windowKey](req, res);
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -1259,7 +1325,17 @@ async function buildPreIpoPrices() {
   return { assets, updated_at: new Date().toISOString() };
 }
 
-app.get("/api/preipo/prices", cached("preipo_prices", 60 * 1000, buildPreIpoPrices));
+app.get("/api/preipo/prices", cached(
+  "preipo_prices",
+  60 * 1000,
+  buildPreIpoPrices,
+  {
+    source: "Variational + Hyperliquid + Lighter + OKX + Gate.io",
+    degraded: (data) => Object.values(data.assets).some(
+      (asset) => asset.venues.length < 2
+    ),
+  }
+));
 
 // ═══════════════════════════════════════════════════════════════
 //  LIQUIDATIONS ENDPOINTS
@@ -1314,31 +1390,47 @@ async function fetchHyperliquidAssetData() {
   return assets;
 }
 
-app.get("/api/liquidations/assets", cached("liq_assets", 60 * 1000, async () => {
-  const assets = await fetchHyperliquidAssetData();
-  return { assets, updated_at: new Date().toISOString() };
-}));
-
-app.get("/api/liquidations/levels", async (req, res) => {
-  const coin = (req.query.coin || "BTC").toUpperCase();
-  const cacheKey = "liq_assets";
-  const now = Date.now();
-
-  let assets;
-  if (cache[cacheKey] && now - cache[cacheKey].ts < 60 * 1000) {
-    assets = cache[cacheKey].data.assets;
-  } else {
-    try {
-      assets = await fetchHyperliquidAssetData();
-      cache[cacheKey] = { data: { assets, updated_at: new Date().toISOString() }, ts: now };
-    } catch (err) {
-      return res.status(502).json({ error: err.message });
-    }
+app.get("/api/liquidations/assets", cached(
+  "liq_assets",
+  60 * 1000,
+  async () => ({
+    assets: await fetchHyperliquidAssetData(),
+    updated_at: new Date().toISOString(),
+  }),
+  {
+    source: "Hyperliquid marks + estimated maintenance margin model",
+    degraded: (data) => data.assets.length < LIQ_ASSETS.length,
   }
+));
 
-  const asset = assets.find((a) => a.coin === coin);
-  if (!asset) return res.status(404).json({ error: `Unknown coin: ${coin}` });
-  res.json(asset);
+const liquidationLevelHandlers = Object.fromEntries(
+  LIQ_ASSETS.map((coin) => [
+    coin,
+    cached(
+      `liq_level_${coin}`,
+      60 * 1000,
+      async () => {
+        let assets = cache.liq_assets?.data?.assets;
+        if (!assets || Date.now() - cache.liq_assets.ts > 60 * 1000) {
+          assets = await fetchHyperliquidAssetData();
+          cache.liq_assets = {
+            data: { assets, updated_at: new Date().toISOString() },
+            ts: Date.now(),
+          };
+        }
+        const asset = assets.find((item) => item.coin === coin);
+        if (!asset) throw new Error(`No current data for ${coin}`);
+        return asset;
+      },
+      { source: "Hyperliquid marks + estimated maintenance margin model" }
+    ),
+  ])
+);
+app.get("/api/liquidations/levels", (req, res) => {
+  const coin = String(req.query.coin || "BTC").toUpperCase();
+  const handler = liquidationLevelHandlers[coin];
+  if (!handler) return res.status(404).json({ error: `Unknown coin: ${coin}` });
+  return handler(req, res);
 });
 
 // ─── Start ──────────────────────────────────────────────────────
@@ -1353,7 +1445,8 @@ app.listen(PORT, "127.0.0.1", () => {
   );
   setTimeout(async () => {
     try {
-      await buildOpportunities();
+      const opportunities = await buildOpportunities();
+      cache.rates_opp = { data: { opportunities }, ts: Date.now() };
       console.log("Rates cache warmed");
     } catch (e) {
       console.error("Rates warm-up failed:", e.message);
